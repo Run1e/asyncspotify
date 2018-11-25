@@ -10,3 +10,6 @@ __version__ = '0.1a'
 from .client import Client
 from .oauth import OAuth
 from .exceptions import *
+
+from .playlist import Playlist
+from .track import Track

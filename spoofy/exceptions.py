@@ -1,39 +1,29 @@
 
 
 class SpoofyException(Exception):
-    def __str__(self):
-        return 'Spoofy encountered an exception.'
+	pass
 
 class NoCredentialsFound(SpoofyException):
-    def __str__(self):
-        return 'No credentials found in cache file.'
+	def __init__(self):
+		super().__init__('No credentials found in cache file.')
 
 class HTTPException(SpoofyException):
-    def __init__(self, resp=None):
-        self.status = resp.status
-        self.reason = resp.reason
-        self.method = resp.method
-
-    def __repr__(self):
-        return f'{self.method} failed: {self.status} {self.reason}'
-
-    def __str__(self):
-        return 'HTTP request failed.'
+	def __init__(self, resp, message=None):
+		self.response = resp
+		self.message = message
+		super().__init__(f'{resp.status} {resp.reason} - {message}')
 
 class AuthenticationError(HTTPException):
-    def __str__(self):
-        return 'Authentication failed.'
+	pass
 
 class RefreshTokenFailed(AuthenticationError):
-    def __str__(self):
-        return 'Token refresh failed.'
+	pass
 
 class Unauthorized(HTTPException):
-    def __str__(self):
-        return 'Access to resource requires authorization.'
-
+	pass
+	
 class Forbidden(HTTPException):
-    pass
+	pass
 
 class NotFound(HTTPException):
-    pass
+	pass
