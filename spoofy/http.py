@@ -13,10 +13,12 @@ class Request:
 
 	base = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, endpoint = '', id=None):
+	def __init__(self, method, endpoint=None, id=None):
 		self.method = method
 		self.id = id
-		self.url = f'{self.base}/{endpoint}'
+		
+		if endpoint is not None:
+			self.url = f'{self.base}/{endpoint}'
 		
 		self.headers = {
 			'Authorization': f'Bearer {self.access_token}'
@@ -49,16 +51,17 @@ class HTTP:
 				
 				data = json.loads(await resp.text())
 				
-				log.debug(saferepr(data))
+				log.info(saferepr(data))
 		
 				# success, return text or json
 				if 300 > resp.status >= 200:
 					return data
 	
 				message = data['error']['message']
-	
-				# unauth
-				if resp.status == 401:
+				
+				if resp.status == 400:
+					raise BadRequest(resp, message)
+				elif resp.status == 401:
 					raise Unauthorized(resp, message)
 				elif resp.status == 403:
 					raise Forbidden(resp, message)

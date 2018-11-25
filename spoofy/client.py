@@ -1,8 +1,10 @@
 
 import asyncio, logging
 
-from .playlist import Playlist
-from .track import Track
+from .pager import Pager
+from .playlist import Playlist, SimplePlaylist
+from .track import Track, SimpleArtist
+from .artist import Artist, SimpleArtist
 
 from .http import HTTP
 from .exceptions import Unauthorized
@@ -36,9 +38,11 @@ class Client:
 	@token
 	async def get_playlist(self, playlist_id):
 		obj = await self.http.get_playlist(playlist_id)
-		return Playlist(id=obj.pop('id'), **obj)
+		pl = Playlist(**obj)
+		await pl._fill_tracks(Pager(self.http, obj['tracks']))
+		return pl
 	
 	@token
 	async def get_track(self, track_id):
 		obj = await self.http.get_track(track_id)
-		return Track(id=obj.pop('id'), **obj)
+		return Track(**obj)

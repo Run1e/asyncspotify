@@ -19,11 +19,14 @@ class AuthenticationError(HTTPException):
 class RefreshTokenFailed(AuthenticationError):
 	pass
 
-class Unauthorized(HTTPException):
-	pass
-	
-class Forbidden(HTTPException):
+class BadRequest(HTTPException):
 	pass
 
-class NotFound(HTTPException):
+class Unauthorized(BadRequest):
+	pass
+	
+class Forbidden(BadRequest):
+	pass
+
+class NotFound(BadRequest):
 	pass
