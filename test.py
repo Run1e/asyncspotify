@@ -25,13 +25,14 @@ async def main():
 		session=session
 	)
 	
-	playlist = await sp.get_playlist('6WCb77q7WBfYbKT9VYst3R?si=gV6fUrI4RN2ixnfHkUeCAw')
-	for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.popularity, reverse=True)):
-		if index == 10:
-			break
-		print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.popularity})')
+	playlist = await sp.get_playlist('6WCb77q7WBfYbKT9VYst3R')
+	for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
+		print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')
 	
-	#track = await sp.get_track('')
+	track = await sp.get_track('19ts4uqOimLvSbu4DyOWE2')
+	track = await sp.get_track('19ts4uqOimLvSbu4DyOWE2')
+	
+	print(track.length)
 	
 
 

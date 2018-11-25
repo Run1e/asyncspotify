@@ -2,12 +2,15 @@
 import asyncio, logging
 
 from .pager import Pager
-from .playlist import Playlist, SimplePlaylist
-from .track import Track, SimpleArtist
-from .artist import Artist, SimpleArtist
+from .playlist import FullPlaylist
+from .track import FullTrack
+from .artist import SimpleArtist
+from .cache import _tracks
+from .utils.search import get
 
 from .http import HTTP
 from .exceptions import Unauthorized
+
 
 log = logging.getLogger(__name__)
 
@@ -38,11 +41,15 @@ class Client:
 	@token
 	async def get_playlist(self, playlist_id):
 		obj = await self.http.get_playlist(playlist_id)
-		pl = Playlist(**obj)
+		pl = FullPlaylist(**obj)
 		await pl._fill_tracks(Pager(self.http, obj['tracks']))
 		return pl
 	
 	@token
 	async def get_track(self, track_id):
+		exist = get(_tracks, id=track_id)
+		if exist:
+			print('found in cache')
+			return exist
 		obj = await self.http.get_track(track_id)
-		return Track(**obj)
+		return FullTrack(**obj)

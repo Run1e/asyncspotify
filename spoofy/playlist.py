@@ -5,6 +5,9 @@ from .object import Object
 from .track import PlaylistTrack
 
 class Playlist(Object):
+	pass
+
+class FullPlaylist(Object):
 	
 	def _fill(self, obj):
 		for value in ('href', 'name', 'description', 'snapshot_id', 'uri', 'collaborative', 'public', 'images'
@@ -19,6 +22,3 @@ class Playlist(Object):
 	async def _fill_tracks(self, pager):
 		async for track in pager:
 			self.tracks.append(PlaylistTrack(id=track['track'].pop('id'), **track))
-			
-class SimplePlaylist(Playlist):
-	pass
