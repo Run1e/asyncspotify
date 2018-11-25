@@ -2,6 +2,8 @@
 
 import aiohttp, asyncio, json, logging
 
+from urllib.parse import urlencode
+
 from pprint import saferepr
 
 from .exceptions import *
@@ -13,11 +15,11 @@ class Request:
 
 	base = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, endpoint=None, id=None):
+	def __init__(self, method, endpoint=None, id=None, query=None):
 		self.method = method
 		self.id = id
 		
-		if endpoint is not None:
+		if endpoint:
 			self.url = f'{self.base}/{endpoint}'
 		
 		self.headers = {
@@ -26,6 +28,9 @@ class Request:
 
 		if id:
 			self.url += '/' + id
+			
+		if query:
+			self.url += '?' + urlencode(query)
 
 	@classmethod
 	def set_access_token(cls, access_token):
@@ -75,3 +80,12 @@ class HTTP:
 	
 	async def get_track(self, track_id):
 		return await self.request(Request('GET', 'tracks', id=track_id))
+	
+	async def get_tracks(self, track_ids):
+		return await self.request(Request('GET', 'tracks', query={'ids': ','.join(track_ids)}))
+	
+	async def get_artist(self, artist_id):
+		return await self.request(Request('GET', 'artists', id=artist_id))
+	
+	async def get_album(self, album_id):
+		return await self.request(Request('GET', 'albums', id=album_id))

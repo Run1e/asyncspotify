@@ -1,18 +1,18 @@
 
 from datetime import timedelta
 
-from .cache import cache
-
 from .object import Object
 from .artist import SimpleArtist
-from .user import User
-
+from .album import SimpleAlbum
 
 
 class Track(Object):
+	def __str__(self):
+		return f'{self.artists[0].name} - {self.name}'
+	
 	def _fill(self, obj):
-		for value in ('available_markets', 'disc_number', 'explicit',
-					  'href', 'name', 'preview_url', 'track_number', 'uri', 'is_local'):
+		for value in ('available_markets', 'disc_number', 'explicit', 'href', 'name', 'preview_url', 'track_number',
+					  'uri', 'is_local'):
 			setattr(self, value, obj[value])
 		
 		self.length = timedelta(milliseconds=obj['duration_ms'])
@@ -29,14 +29,16 @@ class SimpleTrack(Track):
 		
 class FullTrack(Track):
 	
-	@cache
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 	
 	def _fill(self, obj):
+		super()._fill(obj)
+		
 		for value in ('explicit', 'popularity'):
 			setattr(self, value, obj[value])
-		super()._fill(obj)
+			
+		self.album = SimpleAlbum(**obj['album'])
 
 class PlaylistTrack(FullTrack):
 	
