@@ -37,10 +37,12 @@ class Client:
 		self.on_refresh = on_refresh
 		
 	async def refresh_token(self):
+		log.info('Refreshing tokens')
 		await self.auth.refresh()
 		self.http.set_access_token(self.auth.access_token)
 		
 		if self.on_refresh:
+			log.info('Calling on_refresh hook')
 			self.on_refresh(self.auth.access_token, self.auth.refresh_token)
 	
 	@token

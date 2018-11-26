@@ -1,12 +1,16 @@
 from .http import Request
 
-from pprint import pprint
+import logging
+
+log = logging.getLogger(__name__)
 
 class Pager:
+	
 	def __init__(self, http, obj):
 		self.http = http
 		self.current = -1
 		self.set_batch(obj)
+		log.debug(f'Pager created for {self.total} items')
 		
 	def set_batch(self, obj):
 		self.total = obj['total']
@@ -16,6 +20,7 @@ class Pager:
 		self.offset = obj['offset']
 		
 	async def get_next(self):
+		log.debug(f'Pager getting items {self.current}-{self.current + self.limit}')
 		req = Request('GET')
 		req.url = self.next
 		obj = await self.http.request(req)

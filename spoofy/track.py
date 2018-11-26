@@ -2,9 +2,7 @@
 from datetime import datetime, timedelta
 
 from .object import Object
-from .artist import SimpleArtist
 from .album import SimpleAlbum
-from .user import PublicUser
 from .mixins import UrlMixin, ArtistMixin
 
 

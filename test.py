@@ -26,7 +26,7 @@ async def main():
 		session=session
 	)
 	
-	playlist = await sp.get_playlist('6WCb77q7WBfYbKT9VYst3R')
+	playlist = await sp.get_playlist('0YqHr0bDlHhresQnHktgCt')
 	
 	#for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
 	#	print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')

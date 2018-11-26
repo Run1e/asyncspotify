@@ -9,7 +9,6 @@ from pprint import saferepr
 from .exceptions import *
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 class Request:
 
@@ -56,8 +55,8 @@ class HTTP:
 				
 				data = json.loads(await resp.text())
 				
-				log.info(saferepr(data))
-		
+				log.debug(f'{resp.status} {resp.reason} - {req.method} {req.url}')
+				
 				# success, return text or json
 				if 300 > resp.status >= 200:
 					return data
