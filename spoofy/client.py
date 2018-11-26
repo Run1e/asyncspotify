@@ -3,7 +3,7 @@ import asyncio, logging
 
 from .pager import Pager
 from .playlist import FullPlaylist
-from .track import FullTrack
+from .track import FullTrack, PlaylistTrack, SimpleTrack
 from .artist import FullArtist
 from .album import FullAlbum
 
@@ -30,20 +30,24 @@ def token(method):
 
 class Client:
 	
-	def __init__(self, auth, session):
+	def __init__(self, auth, session, on_refresh=None):
 		self.auth = auth
 		self.http = HTTP(session=session)
 		self.http.set_access_token(self.auth.access_token)
+		self.on_refresh = on_refresh
 		
 	async def refresh_token(self):
 		await self.auth.refresh()
 		self.http.set_access_token(self.auth.access_token)
+		
+		if self.on_refresh:
+			self.on_refresh(self.auth.access_token, self.auth.refresh_token)
 	
 	@token
 	async def get_playlist(self, playlist_id):
 		obj = await self.http.get_playlist(playlist_id)
 		playlist = FullPlaylist(**obj)
-		await playlist._fill_tracks(Pager(self.http, obj['tracks']))
+		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, obj['tracks']))
 		return playlist
 	
 	@token
@@ -70,5 +74,5 @@ class Client:
 	async def get_album(self, album_id):
 		obj = await self.http.get_album(album_id)
 		album = FullAlbum(**obj)
-		await album._fill_tracks(Pager(self.http, obj['tracks']))
+		await album._fill_tracks(SimpleTrack, Pager(self.http, obj['tracks']))
 		return album

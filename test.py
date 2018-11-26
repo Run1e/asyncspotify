@@ -1,4 +1,5 @@
 import asyncio, json, aiohttp
+from pprint import pprint
 
 import spoofy
 
@@ -27,8 +28,8 @@ async def main():
 	
 	playlist = await sp.get_playlist('6WCb77q7WBfYbKT9VYst3R')
 	
-	for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
-		print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')
+	#for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
+	#	print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')
 	
 	artist = await sp.get_artist('1gR0gsQYfi6joyO1dlp76N')
 	track = await sp.get_track('19ts4uqOimLvSbu4DyOWE2')
@@ -37,10 +38,14 @@ async def main():
 	
 	print(artist)
 	print(track)
-	print(tracks)
+	pprint(tracks)
 	print(album)
-	print(album.tracks)
+	pprint(album.images)
+	pprint(album.artists)
+	pprint(album.tracks)
 	print(playlist)
+	
+	await session.close()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())

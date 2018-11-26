@@ -2,8 +2,7 @@
 
 
 class Object:
-	def __init__(self, id, **kwargs):
-		self.id = id
+	def __init__(self, **kwargs):
 		if hasattr(self, '_fill'):
 			self._fill(kwargs)
 	

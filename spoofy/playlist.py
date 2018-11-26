@@ -1,23 +1,22 @@
 
 from .object import Object
-from .track import PlaylistTrack
+from .mixins import UrlMixin, TrackContainerMixin, ImageMixin
 
-class Playlist(Object):
-	pass
+class Playlist(Object, UrlMixin, TrackContainerMixin, ImageMixin):
+	
+	def _fill(self, obj):
+		for value in ('id', 'href', 'name', 'description', 'snapshot_id', 'uri', 'collaborative', 'public', 'images', 'snapshot_id'):
+			setattr(self, value, obj.get(value, None))
+			
+		self._fill_urls(obj['external_urls'])
+		self._fill_images(obj['images'])
 
 class FullPlaylist(Playlist):
 	
 	def _fill(self, obj):
-		for value in ('href', 'name', 'description', 'snapshot_id', 'uri', 'collaborative', 'public', 'images'
-					  , 'primary_color', 'snapshot_id'):
-			setattr(self, value, obj[value])
+		super()._fill(obj)
 		
-		self.url = obj['external_urls']['spotify']
-		self.followers = obj['followers']['total']
-	
-	async def _fill_tracks(self, pager):
-		self.tracks = []
-		async for track in pager:
-			trck = PlaylistTrack(id=track['track'].pop('id'), **track)
-			trck.playlist = self
-			self.tracks.append(trck)
+		for value in ('primary_color', 'description'):
+			setattr(self, value, obj.get(value, None))
+		
+		self.follower_count = obj['followers']['total']

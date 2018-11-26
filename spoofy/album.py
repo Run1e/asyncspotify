@@ -1,19 +1,18 @@
 
 from .object import Object
-from .artist import SimpleArtist
+from .mixins import UrlMixin, TrackContainerMixin, ImageMixin, ArtistMixin
 
-class Album(Object):
+class Album(Object, UrlMixin, TrackContainerMixin, ImageMixin, ArtistMixin):
 	
 	def _fill(self, obj):
-		for value in ('album_group', 'album_type', 'available_markets', 'href', 'name', 'uri'):
+		for value in ('id', 'album_group', 'album_type', 'available_markets', 'href', 'name', 'uri'):
 			setattr(self, value, obj.get(value, None))
 			
-		self.artists = []
-		for artist in obj['artists']:
-			self.artists.append(SimpleArtist(**artist))
-			
+		self._fill_urls(obj['external_urls'])
+		self._fill_artists(obj['artists'])
+		self._fill_images(obj['images'])
+		
 		"""
-		external_urls
 		release_date
 		release_date_precision
 		restrictions
@@ -28,7 +27,7 @@ class FullAlbum(Album):
 		super()._fill(obj)
 		
 		for value in ('genres', 'label', 'popularity'):
-			setattr(self, value, obj[value])
+			setattr(self, value, obj.get(value, None))
 			
 			
 		"""
@@ -36,12 +35,3 @@ class FullAlbum(Album):
 		external_ids
 		
 		"""
-		
-	async def _fill_tracks(self, pager):
-		from .track import SimpleTrack
-		
-		self.tracks = []
-		async for track in pager:
-			trck = SimpleTrack(**track)
-			trck.playlist = self
-			self.tracks.append(trck)
