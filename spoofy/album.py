@@ -1,8 +1,8 @@
 
 from .object import Object
-from .mixins import UrlMixin, TrackContainerMixin, ImageMixin, ArtistMixin
+from .mixins import UrlMixin, TrackMixin, ImageMixin, ArtistMixin
 
-class Album(Object, UrlMixin, TrackContainerMixin, ImageMixin, ArtistMixin):
+class Album(Object, UrlMixin, TrackMixin, ImageMixin, ArtistMixin):
 	
 	def _fill(self, obj):
 		for value in ('id', 'album_group', 'album_type', 'available_markets', 'href', 'name', 'uri'):

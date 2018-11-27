@@ -1,5 +1,6 @@
 
 from .image import Image
+from .deco import getids
 
 class ArtistMixin:
 	def _fill_artists(self, artists):
@@ -24,10 +25,20 @@ class UrlMixin:
 		for site, url in external_urls.items():
 			self.urls[site] = url
 			
-class TrackContainerMixin:
+class TrackMixin:
+	@property
+	def tracks(self):
+		return list(self._tracks.values())
+	
+	@getids
+	@property
+	def has_track(self, track):
+		return track in self._tracks
+		
+	
 	async def _fill_tracks(self, object_type, pager):
-		self.tracks = []
+		self._tracks = {}
 		async for object in pager:
 			trck = object_type(**object)
 			trck.playlist = self
-			self.tracks.append(trck)
+			self._tracks[trck.id] = trck

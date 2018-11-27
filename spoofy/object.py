@@ -2,6 +2,9 @@
 
 
 class Object:
+	
+	id = None
+	
 	def __init__(self, **kwargs):
 		if hasattr(self, '_fill'):
 			self._fill(kwargs)

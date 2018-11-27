@@ -1,0 +1,8 @@
+convert added tracks to PlaylistTrack upon adding to a playlist
+  - this might need a better way of handling models?
+
+add limit for adding tracks to playlist (50) etc
+
+external IDs and URLs
+
+auth stuff really needs to work better. also maybe create a spoofy.Scopes object so logic when fetching user stuff later

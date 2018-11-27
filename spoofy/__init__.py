@@ -11,7 +11,8 @@ import logging
 from logging import StreamHandler
 
 from .client import Client
-from .oauth import OAuth
+from .oauth import OAuth, auto_auth
+from . import utils
 from .exceptions import *
 
 from .object import Object

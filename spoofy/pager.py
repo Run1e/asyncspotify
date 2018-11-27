@@ -26,7 +26,7 @@ class Pager:
 		obj = await self.http.request(req)
 		self.set_batch(obj)
 	
-	async def __aiter__(self):
+	def __aiter__(self):
 		return self
 	
 	async def __anext__(self):

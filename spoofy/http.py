@@ -14,8 +14,9 @@ class Request:
 
 	base = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, endpoint=None, id=None, query=None):
+	def __init__(self, method, endpoint=None, id=None, query=None, data=None):
 		self.method = method
+		self.data = data
 		self.id = id
 		
 		if endpoint:
@@ -51,31 +52,40 @@ class HTTP:
 		
 	async def request(self, req, attempt=0):
 		if attempt <= 5:
-			async with self.session.request(req.method, req.url, headers=req.headers) as resp:
-				
-				data = json.loads(await resp.text())
-				
+			async with self.session.request(req.method, req.url, data=req.data, headers=req.headers) as resp:
 				log.debug(f'{resp.status} {resp.reason} - {req.method} {req.url}')
+				
+				data = await resp.text()
+				error = None
+				
+				if resp.headers.get('Content-Type', '').startswith('application/json'):
+					data = json.loads(data)
+					try: error = data['error']['message']
+					except: pass
 				
 				# success, return text or json
 				if 300 > resp.status >= 200:
 					return data
-	
-				message = data['error']['message']
 				
 				if resp.status == 400:
-					raise BadRequest(resp, message)
+					raise BadRequest(resp, error)
 				elif resp.status == 401:
-					raise Unauthorized(resp, message)
+					raise Unauthorized(resp, error)
 				elif resp.status == 403:
-					raise Forbidden(resp, message)
+					raise Forbidden(resp, error)
 				elif resp.status == 404:
-					raise NotFound(resp, message)
+					raise NotFound(resp, error)
+				elif resp.status == 405:
+					raise NotAllowed(resp, error)
 		else:
 			raise HTTPException(req)
 
 	async def get_playlist(self, playlist_id):
 		return await self.request(Request('GET', 'playlists', id=playlist_id))
+	
+	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
+		return await self.request(Request('POST', 'playlists/{}/tracks'.format(playlist_id),
+										  query={'uris': ','.join(track_ids), 'position': position}))
 	
 	async def get_track(self, track_id):
 		return await self.request(Request('GET', 'tracks', id=track_id))

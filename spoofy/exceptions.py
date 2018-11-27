@@ -11,7 +11,10 @@ class HTTPException(SpoofyException):
 	def __init__(self, resp, message=None):
 		self.response = resp
 		self.message = message
-		super().__init__(f'{resp.status} {resp.reason} - {message}')
+		error = f'{resp.status} {resp.reason}'
+		if message is not None:
+			error += f' - {self.message}'
+		super().__init__(error)
 
 class AuthenticationError(HTTPException):
 	pass
@@ -29,4 +32,7 @@ class Forbidden(BadRequest):
 	pass
 
 class NotFound(BadRequest):
+	pass
+
+class NotAllowed(BadRequest):
 	pass

@@ -1,6 +1,7 @@
 
 import asyncio, logging
 
+from .object import Object
 from .pager import Pager
 from .playlist import FullPlaylist
 from .track import FullTrack, PlaylistTrack, SimpleTrack
@@ -8,25 +9,12 @@ from .artist import FullArtist
 from .album import FullAlbum
 
 from .http import HTTP
-from .exceptions import Unauthorized
+from .deco import token, getids
 
 from pprint import pprint
 
 
 log = logging.getLogger(__name__)
-
-def token(method):
-	async def predicate(self, *args, **kwargs):
-		try:
-			return await method(self, *args, **kwargs)
-		except Unauthorized as exc:
-			if exc.message == 'The access token expired':
-				await self.refresh_token()
-				return await method(self, *args, **kwargs)
-			else:
-				raise
-	return predicate
-	
 
 class Client:
 	
@@ -49,8 +37,21 @@ class Client:
 	async def get_playlist(self, playlist_id):
 		obj = await self.http.get_playlist(playlist_id)
 		playlist = FullPlaylist(**obj)
+		playlist._fill_events(self)
 		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, obj['tracks']))
 		return playlist
+	
+	@getids
+	@token
+	async def _playlist_add_tracks(self, playlist_id, track_ids, position=0):
+		tracks = []
+		for index, track in enumerate(track_ids):
+			if isinstance(track, Object):
+				track = track.id
+			if not track.startswith('spotify:track:'):
+				track = 'spotify:track:' + track
+			tracks.append(track)
+		await self.http.playlist_add_tracks(playlist_id, tracks, position=position)
 	
 	@token
 	async def get_track(self, track_id):
