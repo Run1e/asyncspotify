@@ -18,7 +18,7 @@ class OAuth:
 	_access_token = None
 	_refresh_token = None
 
-	def __init__(self, client_id, client_secret, redirect_uri, scope: tuple = None, session=None, on_update=None):
+	def __init__(self, client_id, client_secret, redirect_uri, scope, session=None, on_update=None):
 		
 		self.client_id = client_id
 		self.client_secret = client_secret
@@ -41,14 +41,13 @@ class OAuth:
 		return self._refresh_token
 	
 	def create_auth_url(self):
-		params = {
-			'client_id': self.client_id,
-			'redirect_uri': self.redirect_uri,
-			'response_type': 'code',
-		}
+		params = dict(
+			client_id=self.client_id,
+			redirect_uri=self.redirect_uri,
+			response_type='code'
+		)
 		
-		if self.scope is not None:
-			params['scope'] = ' '.join(self.scope)
+		params['scope'] = str(self.scope)
 	
 		return f'{self.AUTHORIZE_URL}?{urlencode(params)}'
 	
@@ -61,13 +60,13 @@ class OAuth:
 		return parse_qs(query)['code'][0]
 		
 	async def get_tokens(self, code):
-		params = {
-			'client_id': self.client_id,
-			'client_secret': self.client_secret,
-			'grant_type': 'authorization_code',
-			'code': code,
-			'redirect_uri': self.redirect_uri
-		}
+		params = dict(
+			client_id=self.client_id,
+			client_secret=self.client_secret,
+			grant_type='authorization_code',
+			code=code,
+			redirect_uri=self.redirect_uri
+		)
 		
 		async with self.session.post(self.TOKEN_URL, data=params) as resp:
 			if resp.status != 200:
@@ -82,12 +81,12 @@ class OAuth:
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
 			
 	async def refresh(self):
-		params = {
-			'grant_type': 'refresh_token',
-			'refresh_token': self._refresh_token,
-			'client_id': self.client_id,
-			'client_secret': self.client_secret
-		}
+		params = dict(
+			grant_type='refresh_token',
+			refresh_token=self._refresh_token,
+			client_id=self.client_id,
+			client_secret=self.client_secret
+		)
 		
 		async with self.session.post(self.TOKEN_URL, data=params) as resp:
 			data = json.loads(await resp.text())
@@ -96,17 +95,15 @@ class OAuth:
 				raise RefreshTokenFailed(resp, ': '.join(data.values()))
 			
 			self._access_token = data['access_token']
-			self._refresh_token = data['refresh_token']
 			
 			if self.on_update:
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
 	
-def on_update_func(cache_file, access_token, refresh_token):
-	print('saving')
+def on_update_func(cache_file, access_token, refresh_token=None):
 	with open(cache_file, 'w') as f:
 		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
 				
-async def auto_auth(auth, cache_file):
+async def easy_auth(auth, cache_file):
 	import json
 	
 	auth.on_update = (on_update_func, cache_file)
@@ -121,7 +118,7 @@ async def auto_auth(auth, cache_file):
 	except FileNotFoundError:
 		pass
 		
-	code_url = input(f'Please open this URL: {auth.create_auth_url()}\nand then input the URL you were redirected to after accepting: ')
+	code_url = input(f'Please open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting:\n')
 	
 	code = auth.get_code_from_redirect(code_url)
 	

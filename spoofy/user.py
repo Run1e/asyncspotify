@@ -1,20 +1,27 @@
 
 from .object import Object
+from .mixins import ExternalURLMixin, ImageMixin
 
-class User(Object):
+class User(Object, ExternalURLMixin, ImageMixin):
+	def __init__(self, data):
+		super().__init__(data)
+		
+		self.display_name = data.pop('display_name')
+		self.name = self.display_name
+		
+		followers = data.get('followers', None)
+		self.follower_count = None if followers is None else followers['total']
+		
+		self._fill_external_urls(data.pop('external_urls'))
+		
+		images = data.pop('images', None)
+		if images is None:
+			self.images = []
+		else:
+			self._fill_images(images)
+
+class PublicUser(User):
 	pass
 
 class PrivateUser(User):
-	
-	def _fill(self, obj):
-		for value in ('birthdate', 'country', ):
-			setattr(self, value, obj.get(value, None))
-
-class PublicUser(User):
-	
-	def _fill(self, obj):
-		for value in ('display_name', 'href', 'uri'):
-			setattr(self, value, obj.get(value, None))
-			
-		self.name = self.display_name
-		print(self.name)
+	pass

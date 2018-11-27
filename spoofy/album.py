@@ -1,37 +1,42 @@
 
-from .object import Object
-from .mixins import UrlMixin, TrackMixin, ImageMixin, ArtistMixin
+from datetime import datetime
 
-class Album(Object, UrlMixin, TrackMixin, ImageMixin, ArtistMixin):
+from .object import Object
+from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin, ExternalIDMixin
+
+class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 	
-	def _fill(self, obj):
-		for value in ('id', 'album_group', 'album_type', 'available_markets', 'href', 'name', 'uri'):
-			setattr(self, value, obj.get(value, None))
-			
-		self._fill_urls(obj['external_urls'])
-		self._fill_artists(obj['artists'])
-		self._fill_images(obj['images'])
+	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
+	
+	def __init__(self, data):
+		super().__init__(data)
 		
-		"""
-		release_date
-		release_date_precision
-		restrictions
-		"""
+		self.album_group = data.pop('album_group', None) # could be non-existent
+		self.album_type = data.pop('album_type')
+		self.available_markets = data.pop('available_markets')
+		
+		self.release_date_precision = data.pop('release_date_precision')
+		self.release_date = datetime.strptime(
+			data.pop('release_date'),
+			self.__date_fmt[self.release_date_precision]
+		)
+		
+		self._fill_external_urls(data.pop('external_urls'))
+		self._fill_artists(data.pop('artists'))
+		self._fill_images(data.pop('images'))
 
 class SimpleAlbum(Album):
 	pass
 
-class FullAlbum(Album):
+class FullAlbum(Album, ExternalIDMixin):
 	
-	def _fill(self, obj):
-		super()._fill(obj)
+	def __init__(self, data):
+		super().__init__(data)
 		
-		for value in ('genres', 'label', 'popularity'):
-			setattr(self, value, obj.get(value, None))
-			
-			
-		"""
-		copyrights
-		external_ids
+		self.genres = data.pop('genres')
+		self.label = data.pop('label')
+		self.popularity = data.pop('popularity')
+		self.copyrights = data.pop('copyrights')
 		
-		"""
+		self._fill_external_ids(data.pop('external_ids'))
+		

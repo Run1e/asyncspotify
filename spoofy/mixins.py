@@ -8,17 +8,23 @@ class ArtistMixin:
 		
 		self.artists = []
 		for art in artists:
-			self.artists.append(SimpleArtist(**art))
+			self.artists.append(SimpleArtist(art))
 
 class ImageMixin:
 	def _fill_images(self, images):
 		self.images = []
 		for img in images:
-			self.images.append(Image(**img))
+			self.images.append(Image(img))
 			
+class ExternalIDMixin:
+	def _fill_external_ids(self, external_ids):
+		self.external_ids = {}
+		
+		for key, value in external_ids.items():
+			self.external_ids[key] = value
 
-class UrlMixin:
-	def _fill_urls(self, external_urls):
+class ExternalURLMixin:
+	def _fill_external_urls(self, external_urls):
 		self.link = external_urls.pop('spotify', None)
 		
 		self.urls = {}
@@ -35,10 +41,13 @@ class TrackMixin:
 	def has_track(self, track):
 		return track in self._tracks
 		
-	
 	async def _fill_tracks(self, object_type, pager):
 		self._tracks = {}
 		async for object in pager:
-			trck = object_type(**object)
+			trck = object_type(object)
 			trck.playlist = self
 			self._tracks[trck.id] = trck
+			
+class UserMixin:
+	async def _get_user(self):
+		pass

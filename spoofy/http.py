@@ -85,16 +85,22 @@ class HTTP:
 	
 	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
 		return await self.request(Request('POST', 'playlists/{}/tracks'.format(playlist_id),
-										  query={'uris': ','.join(track_ids), 'position': position}))
+										  query=dict(uris=','.join(track_ids), position=position)))
+	
+	async def get_user(self, user_id):
+		return await self.request(Request('GET', 'users', id=user_id))
 	
 	async def get_track(self, track_id):
 		return await self.request(Request('GET', 'tracks', id=track_id))
 	
 	async def get_tracks(self, track_ids):
-		return await self.request(Request('GET', 'tracks', query={'ids': ','.join(track_ids)}))
+		return await self.request(Request('GET', 'tracks', query=dict(ids=','.join(track_ids))))
 	
 	async def get_artist(self, artist_id):
 		return await self.request(Request('GET', 'artists', id=artist_id))
 	
 	async def get_album(self, album_id):
 		return await self.request(Request('GET', 'albums', id=album_id))
+	
+	async def get_albums(self, album_ids):
+		return await self.request(Request('GET', 'albums', query=dict(ids=','.join(album_ids))))

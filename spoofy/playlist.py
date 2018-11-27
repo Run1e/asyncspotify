@@ -1,16 +1,28 @@
 
 from .object import Object
 from .track import Track as TrackModel
-from .mixins import UrlMixin, TrackMixin, ImageMixin
+from .user import PublicUser
+from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, UserMixin
 
-class Playlist(Object, UrlMixin, TrackMixin, ImageMixin):
+from pprint import pprint
+
+
+class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 	
-	def _fill(self, obj):
-		for value in ('id', 'href', 'name', 'description', 'snapshot_id', 'uri', 'collaborative', 'public', 'images', 'snapshot_id'):
-			setattr(self, value, obj.get(value, None))
-			
-		self._fill_urls(obj['external_urls'])
-		self._fill_images(obj['images'])
+	def __init__(self, data):
+		super().__init__(data)
+		
+		self.snapshot_id = data.pop('snapshot_id')
+		self.collaborative = data.pop('collaborative')
+		self.public = data.pop('public')
+		
+		owner = data.pop('owner')
+		print(owner)
+		
+		self.owner = PublicUser(owner)
+		
+		self._fill_external_urls(data.pop('external_urls'))
+		self._fill_images(data.pop('images'))
 		
 	def _fill_events(self, client):
 		self._add_tracks = client._playlist_add_tracks
@@ -27,10 +39,10 @@ class Playlist(Object, UrlMixin, TrackMixin, ImageMixin):
 
 class FullPlaylist(Playlist):
 	
-	def _fill(self, obj):
-		super()._fill(obj)
+	def __init__(self, data):
+		super().__init__(data)
 		
-		for value in ('primary_color', 'description'):
-			setattr(self, value, obj.get(value, None))
+		self.description = data.pop('description')
+		self.primary_color = data.pop('primary_color')
+		self.follower_count = data['followers']['total']
 		
-		self.follower_count = obj['followers']['total']

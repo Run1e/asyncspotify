@@ -8,6 +8,14 @@ from config import *
 async def main():
 	session = aiohttp.ClientSession(loop=loop)
 	
+	scope = spoofy.Scope(
+			'playlist-read-private',
+			'playlist-modify-public',
+			'playlist-modify-private',
+			'playlist-read-private',
+			'playlist-read-collaborative'
+		)
+	
 	auther = spoofy.OAuth(
 		session=session,
 		client_id=client_id,
@@ -16,7 +24,7 @@ async def main():
 		scope=scope
 	)
 	
-	await spoofy.auto_auth(auther, 'tokens.json')
+	await spoofy.easy_auth(auther, 'tokens.json')
 	
 	sp = spoofy.Client(
 		auth=auther,
@@ -25,24 +33,33 @@ async def main():
 	#for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
 	#	print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')
 	
-	playlist = await sp.get_playlist('1x96mtM5csCrplJqQcfiBp')
-	
-	artist = await sp.get_artist('1gR0gsQYfi6joyO1dlp76N')
-	track = await sp.get_track('19ts4uqOimLvSbu4DyOWE2')
-	tracks = await sp.get_tracks('19ts4uqOimLvSbu4DyOWE2', '74ABBu8osxqmuFOAKcWWpG')
-	album = await sp.get_album('1c9Sx7XdXuMptGyfCB6hHs')
-	
+	# get playlist
+	playlist = await sp.get_playlist('0DwDTJVWRFsna3pKW03yqs')
+	pprint(playlist.tracks)
 	print(playlist) # AutoHotkey
+	print(playlist.owner)
+	
+	# get artists
+	artist = await sp.get_artist('1gR0gsQYfi6joyO1dlp76N')
 	print(artist) # Justice
+	
+	# get track
+	track = await sp.get_track('19ts4uqOimLvSbu4DyOWE2')
 	print(track) # Justice - Pleasure
+	
+	# get several tracks
+	tracks = await sp.get_tracks('19ts4uqOimLvSbu4DyOWE2', '74ABBu8osxqmuFOAKcWWpG')
 	pprint(tracks) # Pleasure, Forgiveness
+	
+	# get album
+	album = await sp.get_album('1c9Sx7XdXuMptGyfCB6hHs')
 	print(album) # After Laughter
-	pprint(album.images) # three images
 	pprint(album.artists) # Paramore
 	pprint(album.tracks) # 12 songs
-	pprint(playlist.tracks)
 	
-	await playlist.add_tracks(*album.tracks)
+	# get several albums
+	albums = await sp.get_albums('1c9Sx7XdXuMptGyfCB6hHs', '1bt6q2SruMsBtcerNVtpZB')
+	pprint(albums)
 	
 	await session.close()
 	

@@ -3,38 +3,47 @@ from datetime import datetime, timedelta
 
 from .object import Object
 from .album import SimpleAlbum
-from .mixins import UrlMixin, ArtistMixin
+from .mixins import ExternalURLMixin, ArtistMixin, ExternalIDMixin
 
+from pprint import pprint
 
-class Track(Object, UrlMixin, ArtistMixin):
-	def _fill(self, obj):
-		for value in ('id', 'available_markets', 'disc_number', 'explicit', 'href', 'name', 'preview_url', 'track_number', 'uri', 'is_local'):
-			setattr(self, value, obj.get(value, None))
-		
-		self.length = timedelta(milliseconds=obj['duration_ms'])
-		
-		self._fill_urls(obj['external_urls'])
-		self._fill_artists(obj['artists'])
+class Track(Object, ExternalURLMixin, ArtistMixin):
 	
-	def avaliable_in(self, region):
-		return region in self.available_markets
+	def __init__(self, data):
+		super().__init__(data)
+		
+		self.available_markets = data.pop('available_markets')
+		self.disc_number = data.pop('disc_number')
+		self.explicit = data.pop('explicit')
+		self.preview_url = data.pop('preview_url')
+		self.track_number = data.pop('track_number')
+		self.is_local = data.pop('is_local')
+		
+		self.length = timedelta(milliseconds=data.pop('duration_ms'))
+		
+		self._fill_external_urls(data.pop('external_urls'))
+		self._fill_artists(data.pop('artists'))
+	
+	def avaliable_in(self, market):
+		return market in self.available_markets
 
 class SimpleTrack(Track):
 	pass
 		
-class FullTrack(Track):
+class FullTrack(Track, ExternalIDMixin):
 	
-	def _fill(self, obj):
-		super()._fill(obj)
+	def __init__(self, data):
+		super().__init__(data)
 		
-		for value in ('explicit', 'popularity'):
-			setattr(self, value, obj.get(value, None))
-			
-		self.album = SimpleAlbum(**obj['album'])
+		self.popularity = data.pop('popularity')
+		self._fill_external_ids(data.pop('external_ids'))
+		
+		self.album = SimpleAlbum(data.pop('album'))
+		
 
 class PlaylistTrack(FullTrack):
 	
-	def _fill(self, obj):
-		super()._fill(obj['track'])
-		self.added_at = datetime.strptime(obj['added_at'], "%Y-%m-%dT%H:%M:%SZ")
-		self.added_by = obj['added_by']
+	def __init__(self, data):
+		super().__init__(data.pop('track'))
+		self.added_at = datetime.strptime(data.pop('added_at'), "%Y-%m-%dT%H:%M:%SZ")
+		self.added_by = data.pop('added_by')

@@ -7,6 +7,7 @@ from .playlist import FullPlaylist
 from .track import FullTrack, PlaylistTrack, SimpleTrack
 from .artist import FullArtist
 from .album import FullAlbum
+from .user import PublicUser
 
 from .http import HTTP
 from .deco import token, getids
@@ -35,10 +36,10 @@ class Client:
 	
 	@token
 	async def get_playlist(self, playlist_id):
-		obj = await self.http.get_playlist(playlist_id)
-		playlist = FullPlaylist(**obj)
+		data = await self.http.get_playlist(playlist_id)
+		playlist = FullPlaylist(data)
 		playlist._fill_events(self)
-		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, obj['tracks']))
+		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, data.pop('tracks')))
 		return playlist
 	
 	@getids
@@ -54,28 +55,46 @@ class Client:
 		await self.http.playlist_add_tracks(playlist_id, tracks, position=position)
 	
 	@token
+	async def get_user(self, user_id):
+		data = await self.http.get_user(user_id)
+		return PublicUser(data)
+	
+	@token
 	async def get_track(self, track_id):
-		obj = await self.http.get_track(track_id)
-		return FullTrack(**obj)
+		data = await self.http.get_track(track_id)
+		return FullTrack(data)
 	
 	@token
 	async def get_tracks(self, *track_ids):
 		if len(track_ids) > 50:
 			raise ValueError('get_tracks track limit is 50.')
-		obj = await self.http.get_tracks(track_ids)
+		data = await self.http.get_tracks(track_ids)
 		tracks = []
-		for track in obj['tracks']:
-			tracks.append(FullTrack(**track))
+		for track in data['tracks']:
+			tracks.append(FullTrack(track))
 		return tracks
 	
 	@token
 	async def get_artist(self, artist_id):
-		obj = await self.http.get_artist(artist_id)
-		return FullArtist(**obj)
+		data = await self.http.get_artist(artist_id)
+		return FullArtist(data)
 	
 	@token
 	async def get_album(self, album_id):
-		obj = await self.http.get_album(album_id)
-		album = FullAlbum(**obj)
-		await album._fill_tracks(SimpleTrack, Pager(self.http, obj['tracks']))
+		data = await self.http.get_album(album_id)
+		album = FullAlbum(data)
+		await album._fill_tracks(SimpleTrack, Pager(self.http, data['tracks']))
 		return album
+	
+	@token
+	async def get_albums(self, *album_ids):
+		if len(album_ids) > 20:
+			raise ValueError('get_albums album limit is 20.')
+		data = await self.http.get_albums(album_ids)
+		albums = []
+		for album_obj in data['albums']:
+			album = FullAlbum(album_obj)
+			await album._fill_tracks(SimpleTrack, Pager(self.http, album_obj['tracks']))
+			albums.append(album)
+		return albums
+		
