@@ -1,7 +1,8 @@
 
 class Object:
 	
-	def __init__(self, data):
+	def __init__(self, client, data):
+		self._client = client
 		self.id = data.pop('id', None)
 		self.name = data.pop('name', None)
 		self.href = data.pop('href', None)

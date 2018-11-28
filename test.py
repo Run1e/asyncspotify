@@ -30,12 +30,17 @@ async def main():
 		auth=auther,
 		session=session
 	)
+	
+	await sp.get_me()
+	
+	#pl = await sp.user.create_playlist(name='ya boi', description='WHAT DU FAK')
+	
 	#for index, track in enumerate(sorted(playlist.tracks, key=lambda t: t.length, reverse=True)):
 	#	print(f'{index+1}. {track.artists[0].name} - {track.name} ({track.length})')
 	
 	# get playlist
 	playlist = await sp.get_playlist('0DwDTJVWRFsna3pKW03yqs')
-	pprint(playlist.tracks)
+	#pprint(playlist.tracks)
 	print(playlist) # AutoHotkey
 	print(playlist.owner)
 	

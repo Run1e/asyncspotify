@@ -1,8 +1,8 @@
 
 
-import aiohttp, asyncio, json, logging
+import aiohttp, asyncio, logging
 
-from urllib.parse import urlencode
+import json as jsonserial
 
 from pprint import saferepr
 
@@ -14,9 +14,11 @@ class Request:
 
 	base = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, endpoint=None, id=None, query=None, data=None):
+	def __init__(self, method, endpoint=None, id=None, query=None, data=None, json=None, headers=None):
 		self.method = method
+		self.params = query
 		self.data = data
+		self.json = json
 		self.id = id
 		
 		if endpoint:
@@ -25,12 +27,12 @@ class Request:
 		self.headers = {
 			'Authorization': f'Bearer {self.access_token}'
 		}
+		
+		if isinstance(headers, dict):
+			self.headers.update(headers)
 
 		if id:
 			self.url += '/' + id
-			
-		if query:
-			self.url += '?' + urlencode(query)
 
 	@classmethod
 	def set_access_token(cls, access_token):
@@ -52,14 +54,14 @@ class HTTP:
 		
 	async def request(self, req, attempt=0):
 		if attempt <= 5:
-			async with self.session.request(req.method, req.url, data=req.data, headers=req.headers) as resp:
+			async with self.session.request(req.method, req.url, params=req.params, data=req.data, json=req.json, headers=req.headers) as resp:
 				log.debug(f'{resp.status} {resp.reason} - {req.method} {req.url}')
 				
 				data = await resp.text()
 				error = None
 				
 				if resp.headers.get('Content-Type', '').startswith('application/json'):
-					data = json.loads(data)
+					data = jsonserial.loads(data)
 					try: error = data['error']['message']
 					except: pass
 				
@@ -78,14 +80,38 @@ class HTTP:
 				elif resp.status == 405:
 					raise NotAllowed(resp, error)
 		else:
-			raise HTTPException(req)
+			raise HTTPException(req, 'Request failed after 5 attempts.')
+
+	async def get_me(self):
+		return await self.request(Request('GET', 'me'))
 
 	async def get_playlist(self, playlist_id):
 		return await self.request(Request('GET', 'playlists', id=playlist_id))
 	
+	async def get_me_playlists(self):
+		return
+	
+	async def get_user_playlists(self, user_id):
+		return await self.request(Request('GET', f'users/{user_id}/playlists', query={'limit': 50}))
+	
+	async def get_playlist_tracks(self, playlist_id):
+		return await self.request(Request('GET', f'playlists/{playlist_id}/tracks'))
+	
 	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
 		return await self.request(Request('POST', 'playlists/{}/tracks'.format(playlist_id),
 										  query=dict(uris=','.join(track_ids), position=position)))
+	
+	async def create_playlist(self, user_id, name, public, collaborative, description):
+		data = dict(
+			name=name,
+			public=public,
+			collaborative=collaborative,
+			description=description
+		)
+		
+		return await self.request(Request('POST', f'users/{user_id}/playlists',
+										  headers={'Content-Type': 'application/json'},
+										  json=data))
 	
 	async def get_user(self, user_id):
 		return await self.request(Request('GET', 'users', id=user_id))

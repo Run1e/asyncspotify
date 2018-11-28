@@ -9,8 +9,8 @@ from pprint import pprint
 
 class Track(Object, ExternalURLMixin, ArtistMixin):
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self.available_markets = data.pop('available_markets')
 		self.disc_number = data.pop('disc_number')
@@ -32,18 +32,18 @@ class SimpleTrack(Track):
 		
 class FullTrack(Track, ExternalIDMixin):
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self.popularity = data.pop('popularity')
 		self._fill_external_ids(data.pop('external_ids'))
 		
-		self.album = SimpleAlbum(data.pop('album'))
+		self.album = SimpleAlbum(client, data.pop('album'))
 		
 
 class PlaylistTrack(FullTrack):
 	
-	def __init__(self, data):
-		super().__init__(data.pop('track'))
+	def __init__(self, client, data):
+		super().__init__(client, data.pop('track'))
 		self.added_at = datetime.strptime(data.pop('added_at'), "%Y-%m-%dT%H:%M:%SZ")
 		self.added_by = data.pop('added_by')

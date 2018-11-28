@@ -8,7 +8,7 @@ class ArtistMixin:
 		
 		self.artists = []
 		for art in artists:
-			self.artists.append(SimpleArtist(art))
+			self.artists.append(SimpleArtist(self._client, art))
 
 class ImageMixin:
 	def _fill_images(self, images):
@@ -44,7 +44,7 @@ class TrackMixin:
 	async def _fill_tracks(self, object_type, pager):
 		self._tracks = {}
 		async for object in pager:
-			trck = object_type(object)
+			trck = object_type(self._client, object)
 			trck.playlist = self
 			self._tracks[trck.id] = trck
 			

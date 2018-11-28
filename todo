@@ -3,8 +3,4 @@ convert added tracks to PlaylistTrack upon adding to a playlist
 
 add limit for adding tracks to playlist (50) etc
 
-external IDs and URLs
-
-auth stuff really needs to work better. also maybe create a spoofy.Scopes object so logic when fetching user stuff later
-
 I want playlisttracks to have the playlist attrib

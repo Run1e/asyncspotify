@@ -3,6 +3,10 @@
 class SpoofyException(Exception):
 	pass
 
+class CheckFailure(SpoofyException):
+	def __init__(self, check):
+		super().__init__(f'Missing scope: \'{check}\'')
+
 class NoCredentialsFound(SpoofyException):
 	def __init__(self):
 		super().__init__('No credentials found in cache file.')

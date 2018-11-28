@@ -1,10 +1,9 @@
 
 from .object import Object
 
-class Image(Object):
+class Image:
 	
 	def __init__(self, data):
-		super().__init__(data)
 		self.url = data.pop('url')
 		self.width = data.pop('width')
 		self.height = data.pop('height')

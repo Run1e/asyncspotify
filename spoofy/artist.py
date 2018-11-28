@@ -4,8 +4,8 @@ from .mixins import ImageMixin, ExternalURLMixin
 
 class Artist(Object, ExternalURLMixin):
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self._fill_external_urls(data.pop('external_urls'))
 
@@ -14,8 +14,8 @@ class SimpleArtist(Artist):
 
 class FullArtist(Artist, ImageMixin):
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self.follower_count = data['followers']['total']
 		self.genres = data.pop('genres')

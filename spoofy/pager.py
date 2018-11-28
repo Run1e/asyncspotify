@@ -35,5 +35,7 @@ class Pager:
 		if self.current >= self.total:
 			raise StopAsyncIteration
 		if current == 0 and self.current > 0:
+			if self.next is None:
+				raise StopAsyncIteration
 			await self.get_next()
 		return self.items[current]

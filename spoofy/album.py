@@ -8,18 +8,22 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 	
 	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self.album_group = data.pop('album_group', None) # could be non-existent
 		self.album_type = data.pop('album_type')
 		self.available_markets = data.pop('available_markets')
 		
 		self.release_date_precision = data.pop('release_date_precision')
-		self.release_date = datetime.strptime(
-			data.pop('release_date'),
-			self.__date_fmt[self.release_date_precision]
-		)
+		
+		if self.release_date_precision is None:
+			self.release_date = None
+		else:
+			self.release_date = datetime.strptime(
+				data.pop('release_date'),
+				self.__date_fmt[self.release_date_precision]
+			)
 		
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_artists(data.pop('artists'))
@@ -30,8 +34,8 @@ class SimpleAlbum(Album):
 
 class FullAlbum(Album, ExternalIDMixin):
 	
-	def __init__(self, data):
-		super().__init__(data)
+	def __init__(self, client, data):
+		super().__init__(client, data)
 		
 		self.genres = data.pop('genres')
 		self.label = data.pop('label')
