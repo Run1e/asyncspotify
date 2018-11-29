@@ -1,5 +1,5 @@
 
-import asyncio, logging
+import asyncio, aiohttp, logging
 
 from .object import Object
 from .pager import Pager, SearchPager
@@ -8,6 +8,7 @@ from .track import Track, FullTrack, PlaylistTrack, SimpleTrack
 from .artist import Artist, FullArtist
 from .album import Album, FullAlbum, SimpleAlbum
 from .user import PublicUser, PrivateUser
+from .features import AudioFeatures
 from .exceptions import NotFound
 
 from .http import HTTP
@@ -15,14 +16,14 @@ from .deco import token, getids
 
 from pprint import pprint
 
-
 log = logging.getLogger(__name__)
 
 class Client:
 	
-	def __init__(self, auth, session, cache=True):
+	def __init__(self, auth, session=None, loop=None):
 		self.auth = auth
-		self.cache = cache
+		if session is None:
+			session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
 		self.http = HTTP(session=session)
 		self.http.set_access_token(self.auth.access_token)
 	
@@ -140,7 +141,9 @@ class Client:
 	
 	@getids
 	@token
-	async def _playlist_add_tracks(self, playlist_id, track_ids, position=0):
+	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
+		if len(track_ids) > 100:
+			raise ValueError('playlist_add_tracks track limit is 100.')
 		tracks = []
 		for index, track in enumerate(track_ids):
 			if isinstance(track, Object):
@@ -175,6 +178,16 @@ class Client:
 				tracks.append(FullTrack(self, track_obj))
 		
 		return tracks
+	
+	@getids
+	@token
+	async def get_audio_features(self, track_id):
+		try:
+			data = await self.http.get_audio_features(track_id)
+		except NotFound:
+			return None
+		
+		return AudioFeatures(self, data)
 	
 	@token
 	async def get_artist(self, artist_id):

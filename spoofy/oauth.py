@@ -1,11 +1,9 @@
 
-import json, logging
+import aiohttp, asyncio, json, logging
 from urllib.parse import urlencode, urlparse, parse_qs
 
 
-from .exceptions import AuthenticationError, RefreshTokenFailed
-
-cache_file = None
+from .exceptions import SpoofyException, AuthenticationError, RefreshTokenFailed
 
 log = logging.getLogger(__name__)
 
@@ -18,15 +16,23 @@ class OAuth:
 	_access_token = None
 	_refresh_token = None
 
-	def __init__(self, client_id, client_secret, redirect_uri, scope, session=None, on_update=None):
+	def __init__(self, client_id, client_secret, redirect_uri, scope=None, session=None, loop=None, on_update=None):
+		
+		if session and loop:
+			raise SpoofyException('Both session and loop passed to OAuth. Only one is needed.')
 		
 		self.client_id = client_id
 		self.client_secret = client_secret
 		self.redirect_uri = redirect_uri
 		self.scope = scope
 		self.response_type = 'code'
-		self.session=session
+		
 		self.on_update = None
+		
+		if session is None:
+			session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
+		self.session=session
+		
 	
 	@property
 	def access_token(self):
@@ -47,7 +53,8 @@ class OAuth:
 			response_type='code'
 		)
 		
-		params['scope'] = str(self.scope)
+		if self.scope is not None:
+			params['scope'] = ' '.join(self.scope)
 	
 		return f'{self.AUTHORIZE_URL}?{urlencode(params)}'
 	
@@ -99,12 +106,21 @@ class OAuth:
 			if self.on_update:
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
 	
-def on_update_func(cache_file, access_token, refresh_token=None):
+def on_update_func(cache_file, access_token, refresh_token):
 	with open(cache_file, 'w') as f:
 		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
 				
-async def easy_auth(auth, cache_file):
+async def easy_auth(client_id, client_secret, scope, cache_file, session=None, loop=None):
 	import json
+	
+	auth = OAuth(
+		client_id=client_id,
+		client_secret=client_secret,
+		redirect_uri='http://localhost/',
+		scope=scope,
+		session=session,
+		loop=loop
+	)
 	
 	auth.on_update = (on_update_func, cache_file)
 	
@@ -114,12 +130,14 @@ async def easy_auth(auth, cache_file):
 			if 'access_token' in data and 'refresh_token' in data:
 				auth._access_token = data['access_token']
 				auth._refresh_token = data['refresh_token']
-				return
+				return auth
 	except FileNotFoundError:
 		pass
 		
-	code_url = input(f'Please open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting:\n')
+	code_url = input(f'Hi! This is the initial easy_auth setup.\n\nPlease open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting here:\n')
 	
 	code = auth.get_code_from_redirect(code_url)
 	
 	await auth.get_tokens(code)
+	
+	return auth

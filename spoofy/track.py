@@ -21,13 +21,16 @@ class Track(Object, ExternalURLMixin, ArtistMixin):
 		self.track_number = data.pop('track_number')
 		self.is_local = data.pop('is_local')
 		
-		self.length = timedelta(milliseconds=data.pop('duration_ms'))
+		self.duration = timedelta(milliseconds=data.pop('duration_ms'))
 		
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_artists(data.pop('artists'))
 	
 	def avaliable_in(self, market):
 		return market in self.available_markets
+	
+	async def get_features(self):
+		return await self._client.get_audio_features(self.id)
 
 class SimpleTrack(Track):
 	pass

@@ -35,8 +35,11 @@ class Pager:
 	async def __anext__(self):
 		self.current += 1
 		current = self.current % self.limit
-		if self.current >= self.total or self.current >= self.max:
+		if self.current >= self.total:
 			raise StopAsyncIteration
+		if self.max is not None:
+			if self.current >= self.max:
+				raise StopAsyncIteration
 		if current == 0 and self.current > 0:
 			if self.next is None:
 				raise StopAsyncIteration
