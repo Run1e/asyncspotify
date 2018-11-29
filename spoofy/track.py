@@ -9,10 +9,12 @@ from pprint import pprint
 
 class Track(Object, ExternalURLMixin, ArtistMixin):
 	
+	_type = 'track'
+	
 	def __init__(self, client, data):
 		super().__init__(client, data)
 		
-		self.available_markets = data.pop('available_markets')
+		self.available_markets = data.pop('available_markets', None)
 		self.disc_number = data.pop('disc_number')
 		self.explicit = data.pop('explicit')
 		self.preview_url = data.pop('preview_url')

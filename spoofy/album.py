@@ -6,10 +6,13 @@ from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin, Exter
 
 class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 	
+	_type = 'album'
 	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
 	
 	def __init__(self, client, data):
 		super().__init__(client, data)
+		
+		self._tracks = {}
 		
 		self.album_group = data.pop('album_group', None) # could be non-existent
 		self.album_type = data.pop('album_type')

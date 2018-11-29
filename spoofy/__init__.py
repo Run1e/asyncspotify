@@ -17,7 +17,7 @@ from . import utils
 from .exceptions import *
 
 from .object import Object
-from .playlist import Playlist, FullPlaylist
+from .playlist import Playlist, SimplePlaylist, FullPlaylist
 from .track import Track, SimpleTrack, FullTrack, PlaylistTrack
 from .album import Album, SimpleAlbum, FullAlbum
 from .image import Image

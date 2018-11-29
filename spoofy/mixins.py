@@ -39,13 +39,11 @@ class TrackMixin:
 	@getids
 	@property
 	def has_track(self, track):
-		return track in self._tracks
+		return track.id in self._tracks
 		
 	async def _fill_tracks(self, object_type, pager):
-		self._tracks = {}
 		async for object in pager:
 			trck = object_type(self._client, object)
-			trck.playlist = self
 			self._tracks[trck.id] = trck
 			
 class UserMixin:

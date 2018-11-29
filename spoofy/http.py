@@ -82,6 +82,11 @@ class HTTP:
 		else:
 			raise HTTPException(req, 'Request failed after 5 attempts.')
 
+	async def search(self, types, query, limit):
+		return await self.request(Request('GET', 'search', query=dict(type=','.join(types),
+																	  q=query,
+																	  limit=limit)))
+
 	async def get_me(self):
 		return await self.request(Request('GET', 'me'))
 
@@ -98,20 +103,28 @@ class HTTP:
 		return await self.request(Request('GET', f'playlists/{playlist_id}/tracks'))
 	
 	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
-		return await self.request(Request('POST', 'playlists/{}/tracks'.format(playlist_id),
+		return await self.request(Request('POST', f'playlists/{playlist_id}/tracks',
 										  query=dict(uris=','.join(track_ids), position=position)))
 	
-	async def create_playlist(self, user_id, name, public, collaborative, description):
+	async def create_playlist(self, user_id, name, description, public, collaborative):
 		data = dict(
 			name=name,
+			description=description,
 			public=public,
-			collaborative=collaborative,
-			description=description
+			collaborative=collaborative
 		)
 		
 		return await self.request(Request('POST', f'users/{user_id}/playlists',
 										  headers={'Content-Type': 'application/json'},
 										  json=data))
+	
+	async def edit_playlist(self, playlist_id, name, description, public, collaborative):
+		new = {}
+		for key, value in dict(name=name, description=description, public=public, collaborative=collaborative).items():
+			if value is not None:
+				new[key] = value
+				
+		await self.request(Request('PUT', 'playlists', id=playlist_id, json=new))
 	
 	async def get_user(self, user_id):
 		return await self.request(Request('GET', 'users', id=user_id))
@@ -124,6 +137,9 @@ class HTTP:
 	
 	async def get_artist(self, artist_id):
 		return await self.request(Request('GET', 'artists', id=artist_id))
+	
+	async def get_artists(self, artist_ids):
+		return await self.request(Request('GET', 'artists', query=dict(ids=','.join(artist_ids))))
 	
 	async def get_album(self, album_id):
 		return await self.request(Request('GET', 'albums', id=album_id))

@@ -4,6 +4,8 @@ from .mixins import ImageMixin, ExternalURLMixin
 
 class Artist(Object, ExternalURLMixin):
 	
+	_type = 'artist'
+	
 	def __init__(self, client, data):
 		super().__init__(client, data)
 		

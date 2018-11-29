@@ -9,8 +9,12 @@ from pprint import pprint
 
 class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 	
+	_type = 'playlist'
+	
 	def __init__(self, client, data):
 		super().__init__(client, data)
+		
+		self._tracks = {}
 		
 		self.snapshot_id = data.pop('snapshot_id')
 		self.collaborative = data.pop('collaborative')
@@ -20,7 +24,11 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 		
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_images(data.pop('images'))
-		
+	
+	async def edit(self, name=None, description=None, public=None, collaborative=None):
+		await self._client.http.edit_playlist(self.id, name=name, description=description, public=public, collaborative=collaborative)
+			
+	
 	async def add_track(self, track, position=0):
 		await self._client._playlist_add_tracks(self.id, [track], position=position)
 		if isinstance(track, TrackModel):

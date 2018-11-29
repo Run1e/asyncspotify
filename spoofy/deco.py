@@ -1,5 +1,4 @@
 from .exceptions import Unauthorized, CheckFailure
-from .cacher import Cacher
 
 def token(coro):
 	async def ensure_token(self, *args, **kwargs):
@@ -26,6 +25,7 @@ def getids(method):
 		return await method(self, *new_args, **new_kwargs)
 	
 	return ensure_ids
+
 
 def check(scope):
 	def create_check(method):

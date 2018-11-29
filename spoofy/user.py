@@ -3,6 +3,9 @@ from .object import Object
 from .mixins import ExternalURLMixin, ImageMixin
 
 class User(Object, ExternalURLMixin, ImageMixin):
+	
+	_type = 'user'
+	
 	def __init__(self, client, data):
 		super().__init__(client, data)
 		
@@ -36,7 +39,7 @@ class PrivateUser(User):
 		
 	async def create_playlist(self, name='Unnamed playlist', description=None, public=False, collaborative=False):
 		return await self._client.create_playlist(
-			user_id=self.id,
+			self.id,
 			name=name,
 			description=description,
 			public=public,
