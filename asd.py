@@ -17,7 +17,7 @@ async def main():
 	auth = await spoofy.easy_auth(
 		client_id=client_id,
 		client_secret=client_secret,
-		scope=('playlist-modify-private', 'playlist-read-private'),
+		scope=scope,
 		cache_file='tokens.json'
 	)
 	
@@ -25,27 +25,29 @@ async def main():
 	sp = spoofy.Client(auth)
 	
 	# search for 5 tracks using query 'powerwolf'
-	results = await sp.search_tracks(q='powerwolf', total=5)
-	
-	# iterate tracks
-	for track in results:
-		print(track)
+	results = await sp.search_tracks(q='involvers', total=2)
+	print(results)
 	
 	# get a track
 	track = await sp.get_track('0hqAWKZDhuOfFb6aK002Ph')
+	print(repr(track))
 	
 	# get a playlist
 	playlist = await sp.get_playlist('1wPvaRtuI8mt10CpP2KnlO')
+	print(repr(playlist))
 	
 	# iterate through playlist tracks
 	for track in playlist.tracks:
-		print(track)
+		pass
+		#print(track)
 	
 	# get current user
 	me = await sp.get_me()
+	print(me)
 	
 	# create new playlist
 	new_playlist = await me.create_playlist(name='My playlist!')
+	print(repr(new_playlist))
 	
 	# add tracks from previews playlist to the new playlist
 	await new_playlist.add_tracks(*playlist.tracks)

@@ -9,7 +9,8 @@ from .artist import Artist, FullArtist
 from .album import Album, FullAlbum, SimpleAlbum
 from .user import PublicUser, PrivateUser
 from .features import AudioFeatures
-from .exceptions import NotFound
+from .exceptions import SpoofyException, NotFound
+from .utils import SliceIterator
 
 from .http import HTTP
 from .deco import token, getids
@@ -35,7 +36,7 @@ class Client:
 	@token
 	async def search(self, *types, q=None, total=10):
 		if q is None:
-			raise ValueError('Search query required.')
+			raise SpoofyException('Search query required.')
 		
 		finished_types = []
 		for tpe in types:
@@ -44,7 +45,7 @@ class Client:
 			elif isinstance(tpe, str):
 				finished_types.append(tpe)
 			else:
-				raise ValueError('Unknown type.')
+				raise SpoofyException('Unknown type.')
 		
 		data = await self.http.search(finished_types, q, limit=total if total < 50 else 50)
 		
@@ -86,8 +87,7 @@ class Client:
 	@token
 	async def get_me(self):
 		data = await self.http.get_me()
-		
-		self.user = PrivateUser(self, data)
+		return PrivateUser(self, data)
 	
 	@token
 	async def get_user(self, user_id):
@@ -142,16 +142,18 @@ class Client:
 	@getids
 	@token
 	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
-		if len(track_ids) > 100:
-			raise ValueError('playlist_add_tracks track limit is 100.')
+		
 		tracks = []
+		
 		for index, track in enumerate(track_ids):
 			if isinstance(track, Object):
 				track = track.id
 			if not track.startswith('spotify:track:'):
 				track = 'spotify:track:' + track
 			tracks.append(track)
-		await self.http.playlist_add_tracks(playlist_id, tracks, position=position)
+			
+		for slice in SliceIterator(tracks, 100):
+			await self.http.playlist_add_tracks(playlist_id, slice, position=position)
 	
 	@token
 	async def get_track(self, track_id):
@@ -164,18 +166,16 @@ class Client:
 	
 	@token
 	async def get_tracks(self, *track_ids):
-		if len(track_ids) > 50:
-			raise ValueError('get_tracks track limit is 50.')
-		
-		data = await self.http.get_tracks(track_ids)
-		
 		tracks = []
 		
-		for track_obj in data['tracks']:
-			if track_obj is None:
-				tracks.append(None)
-			else:
-				tracks.append(FullTrack(self, track_obj))
+		for slice in SliceIterator(track_ids, 50):
+			data = await self.http.get_tracks(slice)
+			
+			for track_obj in data['tracks']:
+				if track_obj is None:
+					tracks.append(None)
+				else:
+					tracks.append(FullTrack(self, track_obj))
 		
 		return tracks
 	
@@ -200,18 +200,17 @@ class Client:
 	
 	@token
 	async def get_artists(self, *artist_ids):
-		if len(artist_ids) > 50:
-			raise ValueError('get_artists artist limit is 50.')
-		
-		data = await self.http.get_artists(artist_ids)
 		
 		artists = []
 		
-		for artist_obj in data['artists']:
-			if artist_obj is None:
-				artists.append(None)
-			else:
-				artists.append(FullArtist(self, artist_obj))
+		for slice in SliceIterator(artist_ids, 50):
+			data = await self.http.get_artists(slice)
+			
+			for artist_obj in data['artists']:
+				if artist_obj is None:
+					artists.append(None)
+				else:
+					artists.append(FullArtist(self, artist_obj))
 		
 		return artists
 	
@@ -231,7 +230,7 @@ class Client:
 	@token
 	async def get_albums(self, *album_ids):
 		if len(album_ids) > 20:
-			raise ValueError('get_albums album limit is 20.')
+			raise SpoofyException('get_albums album limit is 20.')
 		
 		data = await self.http.get_albums(album_ids)
 		

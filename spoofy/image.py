@@ -1,6 +1,4 @@
 
-from .object import Object
-
 class Image:
 	
 	def __init__(self, data):

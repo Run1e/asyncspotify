@@ -14,7 +14,7 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		
 		self._tracks = {}
 		
-		self.album_group = data.pop('album_group', None) # could be non-existent
+		self.album_group = data.pop('album_group', None) # can be None, though this is not specified in the API docs
 		self.album_type = data.pop('album_type')
 		self.available_markets = data.pop('available_markets')
 		
