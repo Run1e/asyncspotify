@@ -1,5 +1,6 @@
 
 from .object import Object
+from .http import Request
 from .mixins import ExternalURLMixin, ImageMixin
 
 class User(Object, ExternalURLMixin, ImageMixin):
@@ -36,10 +37,22 @@ class PrivateUser(User):
 		self.country = data.pop('country', None)
 		self.email = data.pop('email', None)
 		self.product = data.pop('product', None)
+	
+	async def get_top_tracks(self, limit=20, offset=0):
+		'''
+		Requires user-top-read
 		
+		:return:
+		'''
+		
+		return await self._client.get_me_top_tracks(limit=limit, offset=offset)
+	
+	async def get_top_artists(self, limit=20, offset=0):
+		return await self._client.get_me_top_artists(limit=limit, offset=offset)
+	
 	async def create_playlist(self, name='Unnamed playlist', description=None, public=False, collaborative=False):
 		return await self._client.create_playlist(
-			self.id,
+			user=self.id,
 			name=name,
 			description=description,
 			public=public,

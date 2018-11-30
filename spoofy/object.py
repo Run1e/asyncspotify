@@ -1,13 +1,26 @@
 
 class Object:
+	'''
+	Represents a generic Spotify Object.
 	
+	Attributes
+	----------
+	
+	id: str
+		Spotify ID of the object.
+	name: str
+		Name of the object.
+	uri: str
+		Spotify URI of the object.
+		
+	'''
 	_type = None
 	
 	def __init__(self, client, data):
 		self._client = client
 		self.id = data.pop('id', None)
 		self.name = data.pop('name', None)
-		self.href = data.pop('href', None)
+		self._href = data.pop('href', None)
 		self.uri = data.pop('uri', None)
 	
 	@property

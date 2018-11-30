@@ -8,6 +8,47 @@ from .mixins import ExternalURLMixin, ArtistMixin, ExternalIDMixin
 from pprint import pprint
 
 class Track(Object, ExternalURLMixin, ArtistMixin):
+	'''
+	Represents a Track object.
+	
+	id: str
+		Spotify ID of the track.
+	name: str
+		Name of the track.
+	artists: List[:class:`Artist`]
+		List of artists that appear on the track.
+	images: List[:class:`Image`]
+		List of associated images, such as album cover in different sizes.
+	uri: str
+		Spotify URI of the album.
+	link: str
+		Spotify URL of the album.
+	type: str
+		Plaintext string of object type: ``track``.
+	available_markets: List[str]
+		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
+	disc_number: int
+		What disc the track appears on. Usually ``1`` unless there are several discs in the album.
+	duration: `timedelta <https://docs.python.org/3/library/datetime.html#timedelta-objects>`_
+		timedelta instance representing the length of the track.
+	explicit: bool
+		Whether the track is explicit or not.
+	external_urls: dict
+		Dictionary that maps type to url.
+	is_playable: bool
+		tbc
+	linked_from: :class:`LinkedTrack`
+		tbc
+	restrictions: restrictions object
+		tbc
+	preview_url: str
+		An URL to a 30 second preview (MP3) of the track.
+	track_number: int
+		The number of the track on the album.
+	is_local: bool
+		Whether the track is from a local file.
+	'''
+	
 	
 	_type = 'track'
 	
@@ -33,9 +74,24 @@ class Track(Object, ExternalURLMixin, ArtistMixin):
 		return await self._client.get_audio_features(self.id)
 
 class SimpleTrack(Track):
+	'''
+	Alias of :class:`Track`
+	'''
 	pass
 		
 class FullTrack(Track, ExternalIDMixin):
+	'''
+	Represents a complete Track object.
+	
+	This type has some additional attributes not existent in :class:`Track` or :class:`SimpleTrack`.
+	
+	album: :class:`SimpleAlbum`
+		An instance of the album the track appears on.
+	popularity: int
+		An indicator of the popularity of the track, 0 being least popular and 100 being the most.
+	external_ids: dict
+		Dictionary of external IDs.
+	'''
 	
 	def __init__(self, client, data):
 		super().__init__(client, data)
@@ -47,6 +103,16 @@ class FullTrack(Track, ExternalIDMixin):
 		
 
 class PlaylistTrack(FullTrack):
+	'''
+	Represents a Track object originating from a playlist.
+	
+	This type has some additional attributes not existent in :class:`Track`, :class:`SimpleTrack` or :class:`FullTrack`.
+	
+	added_at: `datetime <https://docs.python.org/3/library/datetime.html#module-datetime>`_
+		Indicates when the track was added to the playlist.
+	added_by: User object
+		Indicates who added the track to the playlist. The information provided from the API is not enough to instantiate a PublicUser object, so it's a plain copy of the returned json object.
+	'''
 	
 	def __init__(self, client, data):
 		super().__init__(client, data.pop('track'))

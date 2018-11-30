@@ -1,3 +1,6 @@
+
+from functools import wraps
+
 from .exceptions import Unauthorized, CheckFailure
 
 def token(coro):

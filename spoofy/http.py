@@ -48,13 +48,20 @@ class HTTP:
 
 	def __init__(self, session=None):
 		self.session = session
-
+		self.lock = asyncio.Event()
+		
 	def set_access_token(self, access_token):
 		self._access_token = access_token
 		Request.set_access_token(access_token)
 		
 	async def request(self, req, attempt=0):
 		if attempt <= 5:
+			
+			# stop new requests if a previous one caused a 429 which is still being awaited
+			if self.lock.is_set():
+				print('stopped!')
+				await self.lock.wait()
+				
 			async with self.session.request(req.method, req.url, params=req.params, data=req.data, json=req.json, headers=req.headers) as resp:
 				log.debug(f'{resp.status} {resp.reason} - {req.method} {req.url}')
 				
@@ -72,8 +79,9 @@ class HTTP:
 				
 				# rate limiting
 				if resp.status == 429:
-					pprint(resp.headers)
-					await asyncio.sleep(delay=int(resp.headers['Retry-After']))
+					self.lock.set()
+					await asyncio.sleep(delay=int(resp.headers['Retry-After']) + 1)
+					self.lock.clear()
 					return await self.request(req, attempt + 1)
 				
 				if resp.status == 400:
@@ -96,6 +104,12 @@ class HTTP:
 
 	async def get_me(self):
 		return await self.request(Request('GET', 'me'))
+
+	async def get_me_top_tracks(self, limit=20, offset=0):
+		return await self.request(Request('GET', 'me/top/tracks', query=dict(limit=limit, offset=offset)))
+	
+	async def get_me_top_artists(self, limit=20, offset=0):
+		return await self.request(Request('GET', 'me/top/artists', query=dict(limit=limit, offset=offset)))
 
 	async def get_playlist(self, playlist_id):
 		return await self.request(Request('GET', 'playlists', id=playlist_id))
@@ -142,6 +156,9 @@ class HTTP:
 	async def get_tracks(self, track_ids):
 		return await self.request(Request('GET', 'tracks', query=dict(ids=','.join(track_ids))))
 	
+	async def get_audio_features(self, track_id):
+		return await self.request(Request('GET', f'audio-features/{track_id}'))
+	
 	async def get_artist(self, artist_id):
 		return await self.request(Request('GET', 'artists', id=artist_id))
 	
@@ -154,5 +171,5 @@ class HTTP:
 	async def get_albums(self, album_ids):
 		return await self.request(Request('GET', 'albums', query=dict(ids=','.join(album_ids))))
 	
-	async def get_audio_features(self, track_id):
-		return await self.request(Request('GET', f'audio-features/{track_id}'))
+	async def get_album_tracks(self, album_id):
+		return await self.request(Request('GET', f'albums/{album_id}/tracks', query=dict(limit=50)))
