@@ -25,7 +25,7 @@ class Track(Object, ExternalURLMixin, ArtistMixin):
 		Spotify URL of the album.
 	type: str
 		Plaintext string of object type: ``track``.
-	available_markets: List[str]
+	available_markets: List[str] or None
 		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
 	disc_number: int
 		What disc the track appears on. Usually ``1`` unless there are several discs in the album.
@@ -71,6 +71,13 @@ class Track(Object, ExternalURLMixin, ArtistMixin):
 		return market in self.available_markets
 	
 	async def get_features(self):
+		'''
+		Get 'Audio Features' of the track.
+		
+		:param track: :class:`Track` instance or Spotify ID of track.
+		:return: :class:`AudioFeatures`
+		'''
+		
 		return await self._client.get_audio_features(self.id)
 
 class SimpleTrack(Track):

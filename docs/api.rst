@@ -8,9 +8,14 @@ Client
 
 .. autoclass:: Client
     :members:
+    :special-members:
+    :exclude-members: __weakref__
 
 Spotify Objects
 ===============
+
+.. note::
+    None of these objects should be instantiated manually. They are returned by convenience methods in :class:`Client`.
 
 .. autoclass:: Object
     :members:
@@ -79,16 +84,43 @@ User
     :members:
 
 OAuth
------
+=====
 
 .. autoclass:: OAuth
     :members:
 
-.. cofunction:: easy_auth
+.. autocofunction:: easy_auth
 
 Exceptions
-----------
+==========
 
 .. py:currentmodule:: spoofy.exceptions
 
-.. autoexception:: SpoofyException
+.. autoclass:: SpoofyException
+
+.. autoclass:: HTTPException
+    :show-inheritance:
+
+.. autoclass:: BadRequest
+    :show-inheritance:
+
+.. autoclass:: Unauthorized
+    :show-inheritance:
+
+.. autoclass:: Forbidden
+    :show-inheritance:
+
+.. autoclass:: NotFound
+    :show-inheritance:
+
+.. autoclass:: NotAllowed
+    :show-inheritance:
+
+Utilities
+=========
+
+.. py:currentmodule:: spoofy.utils
+
+.. autofunction:: get
+
+.. autofunction:: find

@@ -26,7 +26,7 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		Plaintext string of object type: ``album``.
 	album_type:
 		Type of album, e.g. ``album``, ``single`` or ``compilation``.
-	available_markets: List[str]
+	available_markets: List[str] or None
 		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
 	external_urls: dict
 		Dictionary that maps type to url.
@@ -34,7 +34,7 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		Date (and maybe time) of album release.
 	release_date_precision: str
 		Precision of ``release_date``. Can be ``year``, ``month``, or ``day``.
-	album_group: str (optional)
+	album_group: str or None
 		Type of album, e.g. ``album``, ``single``, ``compilation`` or ``appears_on``.
 	'''
 	
@@ -48,7 +48,7 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		
 		self.album_group = data.pop('album_group', None) # can be None, though this is not specified in the API docs
 		self.album_type = data.pop('album_type')
-		self.available_markets = data.pop('available_markets')
+		self.available_markets = data.pop('available_markets', None)
 		
 		self.release_date_precision = data.pop('release_date_precision')
 		

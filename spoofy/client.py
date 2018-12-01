@@ -20,7 +20,16 @@ from pprint import pprint
 log = logging.getLogger(__name__)
 
 class Client:
-	'''Client interface for the API.'''
+	'''
+	Client interface for the API.
+	
+	This is the class you should be interfacing with when fetching Spotify objects.
+	
+	auth: :class:`OAuth`
+		OAuth instance used for authenticating with the API.
+	session: `aiohttp.ClientSession <http://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession>`_
+		ClientSession used for HTTP requests.
+	'''
 	
 	scopes = (
 		'user-read-recently-played',
@@ -48,9 +57,10 @@ class Client:
 		Creates a Spotify Client instance.
 		
 		:param auth: Instance of :class:`OAuth`
-		:param session: Instance of `aiohttp.ClientSession <http://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession>`_
-		:param loop: asyncio loop
+		:param ClientSession session: `ClientSession <http://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession>`_ instance. If none is provided one will be created automatically.
+		:param Loop loop: `asyncio loop <https://docs.python.org/3/library/asyncio-eventloop.html>`_ to be used in ClientSession creation if none was previously provided.
 		'''
+		
 		self.auth = auth
 		if session is None:
 			session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
@@ -165,6 +175,8 @@ class Client:
 		'''
 		Gets the top tracks of the current user.
 		
+		Requires scope ``user-top-read``.
+		
 		:param int limit: How many tracks to return. Maximum is 50.
 		:param int offset: The index of the first result to return.
 		:return: List[:class:`SimpleTrack`]
@@ -226,9 +238,9 @@ class Client:
 		:param user: :class:`User` instance or user Spotify ID.
 		:param str name: Name of the new playlist.
 		:param str description: Description of the new playlist.
-		:param bool public:
-		:param bool collaborative:
-		:return: An :class:`FullPlaylist` instance.
+		:param bool public: Whether the playlist should be public.
+		:param bool collaborative: Whether the playlist should be collaborative (anyone can edit it).
+		:return: A :class:`FullPlaylist` instance.
 		'''
 		
 		data = await self.http.create_playlist(user, name, description, public, collaborative)
@@ -258,6 +270,29 @@ class Client:
 			public=public,
 			collaborative=collaborative
 		)
+	
+	# @getids
+	# @token
+	async def playlist_add_tracks(self, playlist, tracks, position=0):
+		'''
+		Add several tracks to a playlist.
+
+		:param playlist: :class:`Playlist` or playlist Spotify ID.
+		:param tracks: List of Spotify IDs or :class:`Track` instance (or a mix).
+		:param int position: Position in the playlist to insert tracks.
+		'''
+		
+		tracks_fin = []
+		
+		for index, track in enumerate(tracks):
+			if isinstance(track, Object):
+				track = track.id
+			if not track.startswith('spotify:track:'):
+				track = 'spotify:track:' + track
+			tracks_fin.append(track)
+		
+		for slice in SliceIterator(tracks_fin, 100):
+			await self.http.playlist_add_tracks(playlist, slice, position=position)
 	
 	#@token
 	async def get_playlist(self, playlist_id):
@@ -301,30 +336,6 @@ class Client:
 				playlists.append(playlist)
 		
 		return playlists
-	
-	
-	#@getids
-	#@token
-	async def playlist_add_tracks(self, playlist, tracks, position=0):
-		'''
-		Add tracks to a playlist.
-		
-		:param playlist: :class:`Playlist` or playlist Spotify ID.
-		:param tracks: List of Spotify IDs or :class:`Track`.
-		:param int position: Position in the playlist to insert tracks.
-		'''
-		
-		tracks_fin = []
-		
-		for index, track in enumerate(tracks):
-			if isinstance(track, Object):
-				track = track.id
-			if not track.startswith('spotify:track:'):
-				track = 'spotify:track:' + track
-			tracks_fin.append(track)
-			
-		for slice in SliceIterator(tracks_fin, 100):
-			await self.http.playlist_add_tracks(playlist, slice, position=position)
 	
 	#@token
 	async def get_track(self, track_id):

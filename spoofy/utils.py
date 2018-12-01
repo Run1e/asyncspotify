@@ -2,12 +2,26 @@
 from math import ceil
 
 def get(items, **kwargs):
+	'''
+	Get an item from a list of items.
+	
+	:param items: List or iterator containing :class:`Object` s
+	:param kwargs: kwargs that should match with the objects attributes.
+	:return: First item that matched.
+	'''
 	for item in items:
 		if _is_match(item, kwargs):
 			return item
 	return None
 
 def find(items, **kwargs):
+	'''
+	Same as :func:`get` except it returns a list of all matching items.
+	
+	:param items: List or iterator containing :class:`Object` s
+	:param kwargs: kwargs that should match with the objects attributes.
+	:return: List[:class:`Object`]
+	'''
 	return list(filter(lambda item: _is_match(item, kwargs), items))
 
 def _is_match(item, kwargs):

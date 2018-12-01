@@ -1,9 +1,26 @@
-
 from .object import Object
-from .http import Request
 from .mixins import ExternalURLMixin, ImageMixin
 
+
 class User(Object, ExternalURLMixin, ImageMixin):
+	'''
+	Represents a User object.
+	
+	id: str
+		Spotify ID of the user.
+	name: str
+		Name of the user. Also aliased to the ``display_name`` attribute.
+	images: List[:class:`Image`] or None
+		List of associated images, such as the users profile picture.
+	uri: str
+		Spotify URI of the user.
+	link: str
+		Spotify URL of the user.
+	follower_count: int or None
+		Follower count of the user.
+	external_urls: dict
+		Dictionary that maps type to url.
+	'''
 	
 	_type = 'user'
 	
@@ -11,6 +28,7 @@ class User(Object, ExternalURLMixin, ImageMixin):
 		super().__init__(client, data)
 		
 		self.display_name = data.pop('display_name')
+		self.name = self.display_name
 		
 		followers = data.get('followers', None)
 		self.follower_count = None if followers is None else followers['total']
@@ -24,10 +42,20 @@ class User(Object, ExternalURLMixin, ImageMixin):
 			self._fill_images(images)
 	
 	async def get_playlists(self):
+		'''
+		Get the users playlists.
+		
+		Alias of :meth:`Client.get_user_playlists`
+		'''
 		return await self._client.get_user_playlists(self.id)
 
+
 class PublicUser(User):
+	'''
+	Alias of :class:`User`
+	'''
 	pass
+
 
 class PrivateUser(User):
 	def __init__(self, client, data):
@@ -40,17 +68,39 @@ class PrivateUser(User):
 	
 	async def get_top_tracks(self, limit=20, offset=0):
 		'''
-		Requires user-top-read
+		Gets the top tracks of the current user.
 		
-		:return:
+		Requires scope ``user-top-read``.
+		
+		:param int limit: How many tracks to return. Maximum is 50.
+		:param int offset: The index of the first result to return.
+		:return: List[:class:`SimpleTrack`]
 		'''
 		
 		return await self._client.get_me_top_tracks(limit=limit, offset=offset)
 	
 	async def get_top_artists(self, limit=20, offset=0):
+		'''
+		Get the top artists of the user.
+		
+		:param int limit: How many artists to return. Maximum is 50.
+		:param int offset: The index of the first result to return.
+		:return: List[:class:`SimpleArtist`]
+		'''
+		
 		return await self._client.get_me_top_artists(limit=limit, offset=offset)
 	
 	async def create_playlist(self, name='Unnamed playlist', description=None, public=False, collaborative=False):
+		'''
+		Create a new playlist.
+		
+		:param str name: Name of the new playlist.
+		:param str description: Description of the new playlist.
+		:param bool public: Whether the playlist should be public.
+		:param bool collaborative: Whether the playlist should be collaborative (anyone can edit it).
+		:return: A :class:`FullPlaylist` instance.
+		'''
+		
 		return await self._client.create_playlist(
 			user=self.id,
 			name=name,
