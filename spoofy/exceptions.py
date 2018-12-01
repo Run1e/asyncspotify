@@ -2,7 +2,6 @@ class SpoofyException(Exception):
 	'''
 	Base exception of all exceptions thrown by this library.
 	'''
-	
 	pass
 
 
@@ -20,7 +19,7 @@ class HTTPException(SpoofyException):
 	'''
 	Base exception of all HTTP related exceptions.
 	'''
-	
+
 	def __init__(self, resp, message=None):
 		self.response = resp
 		self.message = message

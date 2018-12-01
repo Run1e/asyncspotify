@@ -1,4 +1,3 @@
-
 """
 A Python library for interacting asyncronously with the Spotify API
 """

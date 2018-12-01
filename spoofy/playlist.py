@@ -1,5 +1,4 @@
 from .object import Object
-from .track import Track as TrackModel
 from .user import PublicUser
 from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, UserMixin
 
@@ -33,22 +32,23 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 	images: List[:class:`Image`]
 		List of associated images.
 	'''
+
 	_type = 'playlist'
-	
+
 	def __init__(self, client, data):
 		super().__init__(client, data)
-		
+
 		self._tracks = {}
-		
+
 		self.snapshot_id = data.pop('snapshot_id')
 		self.collaborative = data.pop('collaborative')
 		self.public = data.pop('public')
-		
+
 		self.owner = PublicUser(client, data.pop('owner'))
-		
+
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_images(data.pop('images'))
-	
+
 	async def edit(self, name=None, description=None, public=None, collaborative=None):
 		'''
 		Edit the playlist.
@@ -58,7 +58,7 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 		:param bool public: New public state of the playlist.
 		:param bool collaborative: New collaborative state of the playlist.
 		'''
-		
+
 		await self._client.edit_playlist(
 			playlist=self.id,
 			name=name,
@@ -66,7 +66,7 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 			public=public,
 			collaborative=collaborative
 		)
-	
+
 	async def add_track(self, track, position=0):
 		'''
 		Add a track to the playlist.
@@ -74,9 +74,9 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 		:param track: Spotify ID or :class:`Track` instance.
 		:param int position: Position in the playlist to insert tracks.
 		'''
-		
+
 		await self._client.playlist_add_tracks(self.id, [track], position=position)
-	
+
 	async def add_tracks(self, *tracks, position=0):
 		'''
 		Add several tracks to the playlist.
@@ -84,7 +84,7 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 		:param tracks: List of Spotify IDs or :class:`Track` instances (or a mix).
 		:param int position: Position in the playlist to insert tracks.
 		'''
-		
+
 		await self._client.playlist_add_tracks(self.id, tracks, position=position)
 
 
@@ -92,7 +92,7 @@ class SimplePlaylist(Playlist):
 	'''
 	Alias of :class:`Playlist`
 	'''
-	
+
 	pass
 
 
@@ -109,10 +109,10 @@ class FullPlaylist(Playlist):
 	follower_count: int
 		Follower count of the playlist.
 	'''
-	
+
 	def __init__(self, client, data):
 		super().__init__(client, data)
-		
+
 		self.description = data.pop('description')
 		self.primary_color = data.pop('primary_color')
 		self.follower_count = data['followers']['total']

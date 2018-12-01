@@ -1,7 +1,5 @@
-
-from functools import wraps
-
 from .exceptions import Unauthorized, CheckFailure
+
 
 def token(coro):
 	async def ensure_token(self, *args, **kwargs):
@@ -13,8 +11,9 @@ def token(coro):
 				return await coro(self, *args, **kwargs)
 			else:
 				raise
-	
+
 	return ensure_token
+
 
 def getids(method):
 	async def ensure_ids(self, *args, **kwargs):
@@ -26,7 +25,7 @@ def getids(method):
 		for key, value in kwargs.items():
 			new_kwargs[key] = value.id if isinstance(value, Object) else value
 		return await method(self, *new_args, **new_kwargs)
-	
+
 	return ensure_ids
 
 
@@ -37,9 +36,12 @@ def check(scope):
 				await method(self, *args, **kwargs)
 			else:
 				raise CheckFailure(scope)
+
 		return check_deco
+
 	return create_check
-			
+
+
 """
 def cache(init):
 	def cacher_func(self, *args, **kwargs):

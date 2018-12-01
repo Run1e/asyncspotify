@@ -1,11 +1,10 @@
-
 import aiohttp, asyncio, json, logging
 from urllib.parse import urlencode, urlparse, parse_qs
-
 
 from .exceptions import SpoofyException, AuthenticationError, RefreshTokenFailed
 
 log = logging.getLogger(__name__)
+
 
 class OAuth:
 	'''Implements the Authorization Code Flow OAuth method.'''
@@ -17,55 +16,54 @@ class OAuth:
 	_refresh_token = None
 
 	def __init__(self, client_id, client_secret, redirect_uri, scope=None, session=None, loop=None, on_update=None):
-		
+
 		if session and loop:
 			raise SpoofyException('Both session and loop passed to OAuth. Only one is needed.')
-		
+
 		self.client_id = client_id
 		self.client_secret = client_secret
 		self.redirect_uri = redirect_uri
 		self.scope = scope
 		self.response_type = 'code'
-		
+
 		self.on_update = None
-		
+
 		if session is None:
 			session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
-		self.session=session
-		
-	
+		self.session = session
+
 	@property
 	def access_token(self):
 		if self._access_token is None:
 			raise AuthenticationError('Access token non-existent, authenticate first!')
 		return self._access_token
-	
+
 	@property
 	def refresh_token(self):
 		if self._refresh_token is None:
 			raise AuthenticationError('Refresh token non-existent, authenticate first!')
 		return self._refresh_token
-	
+
 	def create_auth_url(self):
 		params = dict(
 			client_id=self.client_id,
 			redirect_uri=self.redirect_uri,
 			response_type='code'
 		)
-		
+
 		if self.scope is not None:
 			params['scope'] = ' '.join(self.scope)
-	
+
 		return f'{self.AUTHORIZE_URL}?{urlencode(params)}'
-	
+
 	async def open_auth(self, auth_url):
 		import webbrowser
 		webbrowser.open(auth_url)
-		
+
 	def get_code_from_redirect(self, url):
 		query = urlparse(url).query
 		return parse_qs(query)['code'][0]
-		
+
 	async def get_tokens(self, code):
 		params = dict(
 			client_id=self.client_id,
@@ -74,19 +72,19 @@ class OAuth:
 			code=code,
 			redirect_uri=self.redirect_uri
 		)
-		
+
 		async with self.session.post(self.TOKEN_URL, data=params) as resp:
 			if resp.status != 200:
 				raise AuthenticationError(resp)
-			
+
 			data = await resp.json()
-			
+
 			self._access_token = data['access_token']
 			self._refresh_token = data['refresh_token']
-			
+
 			if self.on_update:
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
-			
+
 	async def refresh(self):
 		params = dict(
 			grant_type='refresh_token',
@@ -94,25 +92,27 @@ class OAuth:
 			client_id=self.client_id,
 			client_secret=self.client_secret
 		)
-		
+
 		async with self.session.post(self.TOKEN_URL, data=params) as resp:
 			data = json.loads(await resp.text())
-				
+
 			if resp.status != 200:
 				raise RefreshTokenFailed(resp, ': '.join(data.values()))
-			
+
 			self._access_token = data['access_token']
-			
+
 			if self.on_update:
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
-	
+
+
 def on_update_func(cache_file, access_token, refresh_token):
 	with open(cache_file, 'w') as f:
 		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
-				
+
+
 async def easy_auth(client_id, client_secret, scope, cache_file, session=None, loop=None):
 	import json
-	
+
 	auth = OAuth(
 		client_id=client_id,
 		client_secret=client_secret,
@@ -121,9 +121,9 @@ async def easy_auth(client_id, client_secret, scope, cache_file, session=None, l
 		session=session,
 		loop=loop
 	)
-	
+
 	auth.on_update = (on_update_func, cache_file)
-	
+
 	try:
 		with open(cache_file, 'r') as f:
 			data = json.loads(f.read())
@@ -133,11 +133,12 @@ async def easy_auth(client_id, client_secret, scope, cache_file, session=None, l
 				return auth
 	except FileNotFoundError:
 		pass
-		
-	code_url = input(f'Hi! This is the initial easy_auth setup.\n\nPlease open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting here:\n')
-	
+
+	code_url = input(
+		f'Hi! This is the initial easy_auth setup.\n\nPlease open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting here:\n')
+
 	code = auth.get_code_from_redirect(code_url)
-	
+
 	await auth.get_tokens(code)
-	
+
 	return auth
