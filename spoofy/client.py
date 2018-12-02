@@ -67,7 +67,7 @@ class Client:
 		self.http = HTTP(session=session)
 		self.http.set_access_token(self.auth.access_token)
 
-	# @token
+	#@token
 	async def refresh_token(self):
 		'''Refresh the access and refresh tokens.'''
 
@@ -75,7 +75,7 @@ class Client:
 		self.auth.refresh()
 		self.http.set_access_token(self.auth.access_token)
 
-	# @token
+	#@token
 	async def search(self, *types, q=None, limit=10):
 		'''
 		Searches for tracks, artists, albums and/or playlists.
@@ -159,7 +159,7 @@ class Client:
 		results = await self.search(Playlist, q=q, limit=limit)
 		return results['playlists']
 
-	# @token
+	#@token
 	async def get_me(self):
 		'''
 		Gets the current user.
@@ -170,7 +170,7 @@ class Client:
 		data = await self.http.get_me()
 		return PrivateUser(self, data)
 
-	# @token
+	#@token
 	async def get_me_top_tracks(self, limit=20, offset=0):
 		'''
 		Gets the top tracks of the current user.
@@ -193,7 +193,7 @@ class Client:
 
 		return tracks
 
-	# @token
+	#@token
 	async def get_me_top_artists(self, limit=20, offset=0):
 		'''
 		Get the top artists of the current user.
@@ -214,7 +214,7 @@ class Client:
 
 		return artists
 
-	# @token
+	#@token
 	async def get_user(self, user_id):
 		'''
 		Get a user.
@@ -230,7 +230,7 @@ class Client:
 
 		return PublicUser(self, data)
 
-	# @token
+	#@token
 	async def create_playlist(self, user, name='Unnamed playlist', description=None, public=False, collaborative=False):
 		'''
 		Create a new playlist.
@@ -250,8 +250,8 @@ class Client:
 
 		return playlist
 
-	# @getids
-	# @token
+	#@getids
+	#@token
 	async def edit_playlist(self, playlist, name=None, description=None, public=None, collaborative=None):
 		'''
 		Edit a playlist.
@@ -271,8 +271,8 @@ class Client:
 			collaborative=collaborative
 		)
 
-	# @getids
-	# @token
+	#@getids
+	#@token
 	async def playlist_add_tracks(self, playlist, tracks, position=0):
 		'''
 		Add several tracks to a playlist.
@@ -294,7 +294,7 @@ class Client:
 		for slice in SliceIterator(tracks_fin, 100):
 			await self.http.playlist_add_tracks(playlist, slice, position=position)
 
-	# @token
+	#@token
 	async def get_playlist(self, playlist_id):
 		'''
 		Get a pre-existing playlist.
@@ -313,8 +313,8 @@ class Client:
 
 		return playlist
 
-	# @getids
-	# @token
+	#@getids
+	#@token
 	async def get_user_playlists(self, user):
 		'''
 		Get a list of attainable playlists a user owns.
@@ -338,7 +338,7 @@ class Client:
 
 		return playlists
 
-	# @token
+	#@token
 	async def get_track(self, track_id):
 		'''
 		Get a track.
@@ -354,7 +354,7 @@ class Client:
 
 		return FullTrack(self, data)
 
-	# @token
+	#@token
 	async def get_tracks(self, *track_ids):
 		'''
 		Get several tracks.
@@ -376,8 +376,8 @@ class Client:
 
 		return tracks
 
-	# @getids
-	# @token
+	#@getids
+	#@token
 	async def get_audio_features(self, track):
 		'''
 		Get 'Audio Features' of a track.
@@ -393,7 +393,7 @@ class Client:
 
 		return AudioFeatures(self, data)
 
-	# @token
+	#@token
 	async def get_artist(self, artist_id):
 		'''
 		Get an artist.
@@ -409,7 +409,7 @@ class Client:
 
 		return FullArtist(self, data)
 
-	# @token
+	#@token
 	async def get_artists(self, *artist_ids):
 		'''
 		Get several artists.
@@ -431,7 +431,7 @@ class Client:
 
 		return artists
 
-	# @token
+	#@token
 	async def get_album(self, album_id):
 		'''
 		Get an album.
@@ -450,7 +450,7 @@ class Client:
 
 		return album
 
-	# @token
+	#@token
 	async def get_albums(self, *album_ids):
 		'''
 		Get several albums.
@@ -476,8 +476,8 @@ class Client:
 
 		return albums
 
-	# @getids
-	# @token
+	#@getids
+	#@token
 	async def get_album_tracks(self, album):
 		'''
 		Get tracks from an album.

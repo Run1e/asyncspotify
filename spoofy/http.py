@@ -100,8 +100,7 @@ class HTTP:
 
 	async def search(self, types, query, limit):
 		return await self.request(Request('GET', 'search', query=dict(type=','.join(types),
-																	  q=query,
-																	  limit=limit)))
+																	  q=query, limit=limit)))
 
 	async def get_me(self):
 		return await self.request(Request('GET', 'me'))
