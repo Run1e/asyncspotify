@@ -4,22 +4,16 @@ class SpoofyException(Exception):
 	'''
 	pass
 
-
-class CheckFailure(SpoofyException):
-	def __init__(self, check):
-		super().__init__(f'Missing scope: \'{check}\'')
-
-
-class NoCredentialsFound(SpoofyException):
-	def __init__(self):
-		super().__init__('No credentials found in cache file.')
-
+class AuthenticationError(SpoofyException):
+	'''
+	General exception when authenticating failed.
+	'''
 
 class HTTPException(SpoofyException):
 	'''
 	Base exception of all HTTP related exceptions.
 	'''
-
+	
 	def __init__(self, resp, message=None):
 		self.response = resp
 		self.message = message
@@ -27,14 +21,6 @@ class HTTPException(SpoofyException):
 		if message is not None:
 			error += f' - {self.message}'
 		super().__init__(error)
-
-
-class AuthenticationError(HTTPException):
-	pass
-
-
-class RefreshTokenFailed(AuthenticationError):
-	pass
 
 
 class BadRequest(HTTPException):

@@ -1,7 +1,7 @@
 import aiohttp, asyncio, json, logging
 from urllib.parse import urlencode, urlparse, parse_qs
 
-from .exceptions import SpoofyException, AuthenticationError, RefreshTokenFailed
+from .exceptions import SpoofyException, AuthenticationError
 
 log = logging.getLogger(__name__)
 

@@ -264,7 +264,7 @@ class Client:
 		'''
 		Create a new playlist.
 		
-		:param user: :class:`User` instance or user Spotify ID.
+		:param user: :class:`User` instance or Spotify ID.
 		:param str name: Name of the new playlist.
 		:param str description: Description of the new playlist.
 		:param bool public: Whether the playlist should be public.
@@ -283,7 +283,7 @@ class Client:
 		'''
 		Edit a playlist.
 		
-		:param playlist: :class:`Playlist` instance or Spotify ID of playlist.
+		:param playlist: :class:`Playlist` instance or Spotify ID.
 		:param str name: New name of the playlist.
 		:param str description: New description of the playlist.
 		:param bool public: New public state of the playlist.
@@ -304,7 +304,7 @@ class Client:
 		'''
 		Add several tracks to a playlist.
 
-		:param playlist: :class:`Playlist` or playlist Spotify ID.
+		:param playlist: :class:`Playlist` instance or Spotify ID.
 		:param tracks: List of Spotify IDs or :class:`Track` instance (or a mix).
 		:param int position: Position in the playlist to insert tracks.
 		'''
@@ -364,7 +364,7 @@ class Client:
 		'''
 		Get a list of attainable playlists a user owns.
 		
-		:param user: :class:`User` instance or users Spotify ID.
+		:param user: :class:`User` instance or Spotify ID.
 		:return: List[:class:`SimplePlaylist`]
 		'''
 		
@@ -406,7 +406,7 @@ class Client:
 		'''
 		Get several tracks.
 		
-		:param str track_ids: List of track Spotify IDs
+		:param str track_ids: List of track Spotify IDs.
 		:return: List[:class:`FullTrack`]
 		'''
 		
@@ -427,7 +427,7 @@ class Client:
 		'''
 		Get 'Audio Features' of a track.
 		
-		:param track: :class:`Track` instance or Spotify ID of track.
+		:param track: :class:`Track` instance or Spotify ID.
 		:return: :class:`AudioFeatures`
 		'''
 		
