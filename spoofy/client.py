@@ -52,17 +52,14 @@ class Client:
 		'app-remote-control'
 	)
 	
-	def __init__(self, auth, loop=None):
+	def __init__(self, auth):
 		'''
 		Creates a Spotify Client instance.
 		
 		:param auth: Instance of :class:`OAuth`
-		:param ClientSession session: `ClientSession <http://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession>`_ instance. If none is provided one will be created automatically.
-		:param Loop loop: `asyncio loop <https://docs.python.org/3/library/asyncio-eventloop.html>`_ to be used in ClientSession creation if none was previously provided.
 		'''
 		
 		self.auth = auth
-		
 		self.http = HTTP(auth)
 	
 	def _get_id(self, obj):
@@ -159,6 +156,42 @@ class Client:
 		
 		results = await self.search(Playlist, q=q, limit=limit)
 		return results['playlists']
+	
+	async def search_track(self, q=None):
+		'''
+		Returns the top track for the query.
+		
+		:return: :class:`SimpleTrack` or None
+		'''
+		
+		return (await self.search_tracks(q=q, limit=1))[0]
+	
+	async def search_artist(self, q=None):
+		'''
+		Returns the top artist for the query.
+
+		:return: :class:`SimpleArtist` or None
+		'''
+		
+		return (await self.search_artists(q=q, limit=1))[0]
+	
+	async def search_album(self, q=None):
+		'''
+		Returns the top album for the query.
+
+		:return: :class:`SimpleAlbum`
+		'''
+		
+		return (await self.search_albums(q=q, limit=1))[0]
+	
+	async def search_playlist(self, q=None):
+		'''
+		Returns the top playlist for the query.
+
+		:return: :class:`SimplePlaylist`
+		'''
+		
+		return (await self.search_playlists(q=q, limit=1))[0]
 	
 	async def get_me(self):
 		'''

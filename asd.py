@@ -25,13 +25,9 @@ async def main():
 	await auth.refresh()
 	
 	# initialize a Client using the authentication object created above
-	sp = spoofy.Client(auth=auth)
+	sp = spoofy.Client(auth)
 	
-	tracks = await sp.get_playlist_tracks('1wPvaRtuI8mt10CpP2KnlO')
-	
-	for track in tracks:
-		pprint(track.name)
-		
+	pprint(await sp.search_album('choose your weapon'))
 	
 	await auth.session.close()
 	

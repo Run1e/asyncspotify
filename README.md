@@ -4,6 +4,12 @@ NOTE: THIS LIBRARY IS IN AN EARLY STAGE WORK IN PROGRESS, NOT RECOMMENDED FOR NO
 
 spoofy is an asynchronous, object-oriented python wrapper for the Spotify Web API.
 
+### Installation
+Simply install it fro PyPi using pip!
+```
+pip install spoofy
+```
+
 ### Usage
 
 The library provides easy to use authentication functions and intuitive method and hierarchies.
@@ -27,7 +33,7 @@ sp = spoofy.Client(auth) # initialize a spotify client
 
 Searching for and getting tracks:
 ```py
-results = await sp.search_tracks(q='involvers', total=2)
+results = await sp.search_tracks(q='involvers', limit=2)
 # [<SimpleTrack id='5xoJhWwvzPJD9k8j8BE2xO' name='27'>, <SimpleTrack id='0WUTBejxPUhURFCFfSYbDc' name='Fighting My Fight'>]
 
 track = await sp.get_track('0hqAWKZDhuOfFb6aK002Ph')
@@ -54,10 +60,4 @@ my_playlist = await me.create_playlist(name='My playlist!')
 
 # add tracks from previews playlist to the new playlist
 await my_playlist.add_tracks(*playlist.tracks)
-```
-
-### Installation
-Simply install it fro pypi using pip!
-```
-pip install spoofy
 ```
