@@ -1,6 +1,6 @@
 convert added tracks to PlaylistTrack upon adding to a playlist
   - this might need a better way of handling models?
 
-add limit for adding tracks to playlist (50) etc
 
-I want playlisttracks to have the playlist attrib
+
+I want playlisttracks to have the playlist attrib, should be None when using get_playlist_tracks

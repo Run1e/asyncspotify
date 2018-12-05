@@ -12,6 +12,8 @@ spoofy is an asyncronous, object-oriented wrapper for the Spotify Web API.
    :maxdepth: 3
    :caption: Contents:
 
+   quickstart
+   examples
    api
 
 

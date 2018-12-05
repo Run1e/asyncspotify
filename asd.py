@@ -1,4 +1,4 @@
-import asyncio, json, aiohttp
+import asyncio
 from pprint import pprint
 
 import spoofy
@@ -14,30 +14,26 @@ async def main():
 		'playlist-read-collaborative'
 	)
 	
-	session = aiohttp.ClientSession()
-	
 	# create an authentication object, storing tokens in tokens.json
 	auth = await spoofy.easy_auth(
 		client_id=client_id,
 		client_secret=client_secret,
 		scope=scope,
-		session=session,
 		cache_file='tokens.json'
 	)
 	
+	await auth.refresh()
+	
 	# initialize a Client using the authentication object created above
-	sp = spoofy.Client(
-		auth=auth,
-		session=session
-	)
+	sp = spoofy.Client(auth=auth)
 	
-	me = await sp.get_me()
+	tracks = await sp.get_playlist_tracks('1wPvaRtuI8mt10CpP2KnlO')
 	
-	tracks = await sp.get_album_tracks('7c2Xfq7aQKzs0KdSI3K7Rc')
+	for track in tracks:
+		pprint(track.name)
+		
 	
-	pprint(tracks)
-	
-	await session.close()
+	await auth.session.close()
 	
 asyncio.run(main())
 

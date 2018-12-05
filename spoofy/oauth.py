@@ -15,22 +15,16 @@ class OAuth:
 	_access_token = None
 	_refresh_token = None
 
-	def __init__(self, client_id, client_secret, redirect_uri, scope=None, session=None, loop=None, on_update=None):
-
-		if session and loop:
-			raise SpoofyException('Both session and loop passed to OAuth. Only one is needed.')
-
+	def __init__(self, client_id, client_secret, redirect_uri, scope=None, loop=None, on_update=None):
+	
 		self.client_id = client_id
 		self.client_secret = client_secret
 		self.redirect_uri = redirect_uri
 		self.scope = scope
 		self.response_type = 'code'
+		self.on_update = on_update
 
-		self.on_update = None
-
-		if session is None:
-			session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
-		self.session = session
+		self.session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
 
 	@property
 	def access_token(self):
@@ -98,10 +92,10 @@ class OAuth:
 
 			if resp.status != 200:
 				raise RefreshTokenFailed(resp, ': '.join(data.values()))
-
+			
 			self._access_token = data['access_token']
 
-			if self.on_update:
+			if callable(self.on_update[0]):
 				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
 
 
@@ -110,7 +104,22 @@ def on_update_func(cache_file, access_token, refresh_token):
 		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
 
 
-async def easy_auth(client_id, client_secret, scope, cache_file, session=None, loop=None):
+async def easy_auth(client_id, client_secret, scope, cache_file):
+	'''
+	Convenience function to make authorization using the Authorization Code Flow method as easy as possible.
+	
+	.. note::
+		The client id and client secret are just that, *secret*.
+		The tokens stored in `cache_file` are also extremely sensitive, as they single-handedly gives access to your
+		account until the token runs out.
+	
+	:param client_id: Client ID of your application.
+	:param client_secret: Client Secret of your application.
+	:param scope: List of scopes (listed `here. <https://developer.spotify.com/documentation/general/guides/scopes/>`_)
+	:param cache_file: JSON file to store the access and refresh tokens in.
+	:return:
+	'''
+	
 	import json
 
 	auth = OAuth(
@@ -118,8 +127,6 @@ async def easy_auth(client_id, client_secret, scope, cache_file, session=None, l
 		client_secret=client_secret,
 		redirect_uri='http://localhost/',
 		scope=scope,
-		session=session,
-		loop=loop
 	)
 
 	auth.on_update = (on_update_func, cache_file)
