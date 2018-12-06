@@ -529,8 +529,6 @@ class Client:
 		
 		album = self._get_id(album)
 		
-		print(album)
-		
 		data = await self.http.get_album_tracks(album)
 		
 		tracks = []

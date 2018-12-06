@@ -9,10 +9,9 @@ Welcome to spoofy's documentation!
 spoofy is an asyncronous, object-oriented wrapper for the Spotify Web API.
 
 Primary goals of this library:
- - easy and intuitive interface
+ - easy and intuitive asyncronous interface
  - object-oriented inheritance and design
- -
- - handling of rate limiting
+ - automatic rate limiting handling
 
 .. toctree::
    :maxdepth: 3
