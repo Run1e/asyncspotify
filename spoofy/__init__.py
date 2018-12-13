@@ -22,6 +22,9 @@ from .image import Image
 from .artist import Artist, SimpleArtist, FullArtist
 from .user import User, PrivateUser, PublicUser
 
+from .device import Device
+from .playing import CurrentlyPlaying, CurrentlyPlayingContext
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 # log.addHandler(StreamHandler())

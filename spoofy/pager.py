@@ -13,7 +13,6 @@ class Pager:
 		self.max = max
 		self.current = -1
 		self.set_next(obj)
-		log.debug(f'Pager created for {self.total} items')
 
 	def set_next(self, obj):
 		self.total = obj['total']
@@ -23,7 +22,6 @@ class Pager:
 		self.offset = obj['offset']
 
 	async def get_next(self):
-		log.debug(f'Pager getting items {self.current}-{self.current + self.limit}')
 		req = Request('GET')
 		req.url = self.next
 		obj = await self.http.request(req)

@@ -48,7 +48,7 @@ class OAuth:
 		if self.scope is not None:
 			params['scope'] = ' '.join(self.scope)
 
-		return f'{self.AUTHORIZE_URL}?{urlencode(params)}'
+		return '{}?{}'.format(self.AUTHORIZE_URL, urlencode(params))
 
 	async def open_auth(self, auth_url):
 		import webbrowser
@@ -141,8 +141,13 @@ async def easy_auth(client_id, client_secret, scope, cache_file):
 	except FileNotFoundError:
 		pass
 
-	code_url = input(
-		f'Hi! This is the initial easy_auth setup.\n\nPlease open this URL: {auth.create_auth_url()}\n- and then input the URL you were redirected to after accepting here:\n')
+	fmt = (
+		'Hi! This is the initial easy_auth setup.\n\n'
+		'Please open this URL: {}\n'
+		'- and then input the URL you were redirected to after accepting here:\n'
+	)
+
+	code_url = input(fmt.format(auth.create_auth_url()))
 
 	code = auth.get_code_from_redirect(code_url)
 

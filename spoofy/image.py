@@ -8,4 +8,4 @@ class Image:
 		return self.url
 
 	def __repr__(self):
-		return f'<Image url=\'{self.url}\''
+		return '<Image url=\'{}\''.format(self.url)

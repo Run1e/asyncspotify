@@ -28,12 +28,12 @@ class Object:
 		return self._type
 
 	def __repr__(self):
-		repr_str = f'{self.__class__.__name__}'
+		repr_str = self.__class__.__name__
 		if self.id:
-			repr_str += f' id=\'{self.id}\''
+			repr_str += ' id=\'{}\''.format(self.id)
 		if self.name:
-			repr_str += f' name=\'{self.name}\''
-		return f'<{repr_str}>'
+			repr_str += ' name=\'{}\''.format(self.name)
+		return '<{}>'.format(repr_str)
 
 	def __str__(self):
 		return self.name or self.__repr__()

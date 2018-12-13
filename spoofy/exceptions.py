@@ -17,9 +17,9 @@ class HTTPException(SpoofyException):
 	def __init__(self, resp, message=None):
 		self.response = resp
 		self.message = message
-		error = f'{resp.status} {resp.reason}'
+		error = '{0.status} {0.reason}'.format(resp)
 		if message is not None:
-			error += f' - {self.message}'
+			error += ' - {}'.format(self.message)
 		super().__init__(error)
 
 

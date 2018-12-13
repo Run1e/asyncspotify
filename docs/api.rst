@@ -83,6 +83,21 @@ User
 .. autoclass:: PrivateUser
     :members:
 
+Playing Objects
+---------------
+
+.. autoclass:: CurrentlyPlaying
+    :members:
+
+.. autoclass:: CurrentlyPlayingContext
+    :members:
+
+Device
+------
+
+.. autoclass:: Device
+    :members:
+
 OAuth
 =====
 
