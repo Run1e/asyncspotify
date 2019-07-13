@@ -2,8 +2,6 @@
 
 ![](https://readthedocs.org/projects/spoofy/badge/?version=latest)
 
-NOTE: THIS LIBRARY IS IN AN EARLY STAGE WORK IN PROGRESS, NOT RECOMMENDED FOR NORMAL USE YET!
-
 spoofy is an asynchronous, object-oriented python wrapper for the Spotify Web API.
 
 ### Installation
