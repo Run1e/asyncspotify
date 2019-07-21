@@ -569,6 +569,26 @@ class Client:
 
 		return FullArtist(self, data)
 
+	async def get_artist_albums(self, artist_id, limit=50, **kwargs):
+		'''
+		Get an artist's albums
+		:param str artist_id: Spotify ID of artist.
+		:param int limit: How many albums to return.
+		:param dict **kwargs: Other Spotify API fields
+		:return: List[:class:`SimpleAlbum`]
+		'''
+		try:
+			data = await self.http.get_artist_albums(artist_id, limit, **kwargs)
+		except NotFound:
+			return None
+
+		albums = []
+
+		async for album_obj in Pager(self.http, data):
+			albums.append(SimpleAlbum(self, album_obj))
+
+		return albums
+
 	async def get_artists(self, *artist_ids):
 		'''
 		Get several artists.

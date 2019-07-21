@@ -205,6 +205,9 @@ class HTTP:
 	async def get_artist(self, artist_id):
 		return await self.request(Request('GET', 'artists', id=artist_id))
 
+	async def get_artist_albums(self, artist_id, limit=50, **kwargs):
+		return await self.request(Request('GET', 'artists/{}/albums'.format(artist_id), query=dict(limit=limit, **kwargs)))
+
 	async def get_artists(self, artist_ids):
 		return await self.request(Request('GET', 'artists', query=dict(ids=','.join(artist_ids))))
 
