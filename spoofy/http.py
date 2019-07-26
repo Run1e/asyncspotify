@@ -94,11 +94,11 @@ class HTTP:
 		else:
 			raise HTTPException(req, 'Request failed after 5 attempts.')
 
-	async def get_player(self):
-		return await self.request(Request('GET', 'me/player'))
+	async def get_player(self, **kwargs):
+		return await self.request(Request('GET', 'me/player', query=kwargs))
 
-	async def player_currently_playing(self):
-		return await self.request(Request('GET', 'me/player/currently-playing'))
+	async def player_currently_playing(self, **kwargs):
+		return await self.request(Request('GET', 'me/player/currently-playing', query=kwargs))
 
 	async def get_devices(self):
 		return await self.request(Request('GET', 'me/player/devices'))
@@ -109,8 +109,8 @@ class HTTP:
 	async def player_prev(self, device_id):
 		await self.request(Request('POST', 'me/player/previous', query=dict(device=device_id) if device_id else None))
 
-	async def player_play(self, device_id):
-		await self.request(Request('PUT', 'me/player/play', query=dict(device=device_id) if device_id else None))
+	async def player_play(self, device_id, **kwargs):
+		await self.request(Request('PUT', 'me/player/play', query=dict(device=device_id) if device_id else None, json=kwargs))
 
 	async def player_pause(self, device_id):
 		await self.request(Request('PUT', 'me/player/pause', query=dict(device=device_id) if device_id else None))
@@ -140,19 +140,18 @@ class HTTP:
 
 		await self.request(Request('PUT', 'me/player/shuffle', query=query))
 
-
-	async def search(self, types, query, limit):
-		return await self.request(Request('GET', 'search', query=dict(type=','.join(types),
-																	  q=query, limit=limit)))
+	async def search(self, types, query, limit, **kwargs):
+		return await self.request(
+			Request('GET', 'search', query=dict(type=','.join(types), q=query, limit=limit, **kwargs)))
 
 	async def get_me(self):
 		return await self.request(Request('GET', 'me'))
 
-	async def get_me_top_tracks(self, limit=20, offset=0):
-		return await self.request(Request('GET', 'me/top/tracks', query=dict(limit=limit, offset=offset)))
+	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term'):
+		return await self.request(Request('GET', 'me/top/tracks', query=dict(limit=limit, offset=offset, time_range=time_range)))
 
-	async def get_me_top_artists(self, limit=20, offset=0):
-		return await self.request(Request('GET', 'me/top/artists', query=dict(limit=limit, offset=offset)))
+	async def get_me_top_artists(self, limit=20, offset=0, time_range='medium_term'):
+		return await self.request(Request('GET', 'me/top/artists', query=dict(limit=limit, offset=offset, time_range=time_range)))
 
 	async def get_playlist(self, playlist_id):
 		return await self.request(Request('GET', 'playlists', id=playlist_id))
@@ -217,11 +216,20 @@ class HTTP:
 	async def get_artist_related_artists(self, artist_id):
 		return await self.request(Request('GET', 'artists/{}/related-artists'.format(artist_id)))
 
-	async def get_album(self, album_id):
-		return await self.request(Request('GET', 'albums', id=album_id))
+	async def get_album(self, album_id, **kwargs):
+		return await self.request(Request('GET', 'albums', id=album_id, query=kwargs))
 
-	async def get_albums(self, album_ids):
-		return await self.request(Request('GET', 'albums', query=dict(ids=','.join(album_ids))))
+	async def get_albums(self, album_ids, **kwargs):
+		return await self.request(Request('GET', 'albums', query=dict(ids=','.join(album_ids), **kwargs)))
 
-	async def get_album_tracks(self, album_id):
-		return await self.request(Request('GET', 'albums/{}/tracks'.format(album_id), query=dict(limit=50)))
+	async def get_album_tracks(self, album_id, **kwargs):
+		return await self.request(Request('GET', 'albums/{}/tracks'.format(album_id), query=dict(limit=50, **kwargs)))
+
+	async def get_followed_artists(self, type='artist', limit=50):
+		return await self.request(Request('GET', 'me/following', query=dict(limit=limit, type=type)))
+
+	async def following(self, type, ids, **kwargs):
+		await self.request(Request('PUT', 'me/following', query=dict(type=type, ids=','.join(ids), **kwargs)))
+
+	async def close_session(self):
+		await self.session.close()
