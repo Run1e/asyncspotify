@@ -53,3 +53,11 @@ class SearchPager(Pager):
 	def set_next(self, obj):
 		obj = obj[self.type]
 		super().set_next(obj)
+
+
+class CursorBasedPaging(SearchPager):
+
+	def set_next(self, obj):
+		obj[self.type]['offset'] = None
+		self.cursors = obj[self.type]['cursors']
+		super().set_next(obj)

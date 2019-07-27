@@ -55,10 +55,13 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		if self.release_date_precision is None:
 			self.release_date = None
 		else:
-			self.release_date = datetime.strptime(
-				data.pop('release_date'),
-				self.__date_fmt[self.release_date_precision]
-			)
+			try:
+				self.release_date = datetime.strptime(
+					data.pop('release_date'),
+					self.__date_fmt[self.release_date_precision]
+				)
+			except ValueError:
+				self.release_date = None
 
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_artists(data.pop('artists'))

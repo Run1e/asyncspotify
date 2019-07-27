@@ -66,9 +66,16 @@ class CurrentlyPlayingContext(CurrentlyPlaying):
 		'''Goes to the previous track.'''
 		await self._client.player_prev(device=self.device.id)
 
-	async def play(self):
-		'''Starts playback.'''
-		await self._client.player_play(device=self.device.id)
+	async def play(self, **kwargs):
+		'''
+		Starts playback.
+
+		:param kwargs: body Parameters of the request. For example:
+		player_play(context_uri='spotify:album:1Je1IMUlBXcx1Fz0WE7oPT',
+					offset=dict(uri='spotify:track:1301WleyT98MSxVHPZCA6M'), position_ms=1000)
+		'''
+
+		await self._client.player_play(device=self.device.id, **kwargs)
 
 	async def pause(self):
 		'''Pauses playback.'''
