@@ -1,8 +1,6 @@
-import aiohttp
-import logging
-
-from asyncio import Lock, sleep
 import json as jsonserial
+import logging
+from asyncio import Lock, sleep
 
 from .exceptions import *
 

@@ -5,7 +5,7 @@ from .object import Object
 class ArtistMixin:
 	def _fill_artists(self, artists):
 		from .artist import SimpleArtist
-		
+
 		self.artists = []
 		for art in artists:
 			self.artists.append(SimpleArtist(self._client, art))
@@ -21,7 +21,7 @@ class ImageMixin:
 class ExternalIDMixin:
 	def _fill_external_ids(self, external_ids):
 		self.external_ids = {}
-		
+
 		for key, value in external_ids.items():
 			self.external_ids[key] = value
 
@@ -29,7 +29,7 @@ class ExternalIDMixin:
 class ExternalURLMixin:
 	def _fill_external_urls(self, external_urls):
 		self.link = external_urls.pop('spotify', None)
-		
+
 		self.urls = {}
 		for site, url in external_urls.items():
 			self.urls[site] = url
@@ -39,15 +39,18 @@ class TrackMixin:
 	@property
 	def tracks(self):
 		return list(self._tracks.values())
-	
+
 	@property
 	def has_track(self, track):
 		if isinstance(track, Object):
 			track = track.id
 		return track.id in self._tracks
-	
+
 	async def _fill_tracks(self, object_type, pager):
 		async for object in pager:
+			# TODO: handle this case nicer?
+			if object['track'] is None:
+				continue
 			trck = object_type(self._client, object)
 			self._tracks[trck.id] = trck
 

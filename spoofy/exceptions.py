@@ -4,16 +4,18 @@ class SpoofyException(Exception):
 	'''
 	pass
 
+
 class AuthenticationError(SpoofyException):
 	'''
 	General exception when authenticating failed.
 	'''
 
+
 class HTTPException(SpoofyException):
 	'''
 	Base exception of all HTTP related exceptions.
 	'''
-	
+
 	def __init__(self, resp, message=None):
 		self.response = resp
 		self.message = message

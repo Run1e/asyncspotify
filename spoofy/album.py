@@ -1,7 +1,7 @@
 from datetime import datetime
 
+from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin, ImageMixin, TrackMixin
 from .object import Object
-from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin, ExternalIDMixin
 
 
 class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):

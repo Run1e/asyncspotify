@@ -1,5 +1,6 @@
 from .object import Object
 
+
 class Device(Object):
 	'''
 	Represents a Device object.

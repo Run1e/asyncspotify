@@ -1,8 +1,6 @@
-from .http import Route
-
-from pprint import pprint
-
 import logging
+
+from .http import Route
 
 log = logging.getLogger(__name__)
 

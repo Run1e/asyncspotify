@@ -1,6 +1,3 @@
-from math import ceil
-
-
 def get(items, **kwargs):
 	'''
 	Get an item from a list of items.
@@ -33,21 +30,16 @@ def _is_match(item, kwargs):
 	return True
 
 
-class SliceIterator:
-	def __init__(self, list, step):
-		self.current = -1
-		self.list = list
-		self.step = step
-		self.step_count = len(list) / step
+def subslice(iter, step):
+	group = list()
 
-	def __iter__(self):
-		return self
+	for idx, item in enumerate(iter):
+		if idx % step == 0:
+			if group:
+				yield group
+			group.clear()
 
-	def __next__(self):
-		self.current += 1
-		base = self.current * self.step
+		group.append(item)
 
-		if self.current >= self.step_count:
-			raise StopIteration
-
-		return self.list[base:base + self.step]
+	if group:
+		yield group

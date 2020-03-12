@@ -1,5 +1,5 @@
+from .mixins import ExternalURLMixin, ImageMixin
 from .object import Object
-from .mixins import ImageMixin, ExternalURLMixin
 
 
 class Artist(Object, ExternalURLMixin):

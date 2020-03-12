@@ -1,8 +1,6 @@
+from .mixins import ExternalURLMixin, ImageMixin, TrackMixin, UserMixin
 from .object import Object
 from .user import PublicUser
-from .mixins import ExternalURLMixin, TrackMixin, ImageMixin, UserMixin
-
-from pprint import pprint
 
 
 class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):

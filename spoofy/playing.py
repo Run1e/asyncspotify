@@ -1,13 +1,13 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
+from .device import Device
 from .object import Object
 from .track import FullTrack
-from .device import Device
 
 
 class CurrentlyPlaying(Object):
 	'''
-	Representes a Currently Playing object.
+	Represents a Currently Playing object.
 
 	timestamp: datetime
 		When the object information was created by the Spotify API.

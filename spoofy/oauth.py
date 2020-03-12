@@ -1,7 +1,11 @@
-import aiohttp, asyncio, json, logging
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import parse_qs, urlencode, urlparse
 
-from .exceptions import SpoofyException, AuthenticationError
+import aiohttp
+import asyncio
+import json
+import logging
+
+from .exceptions import AuthenticationError
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +20,7 @@ class OAuth:
 	_refresh_token = None
 
 	def __init__(self, client_id, client_secret, redirect_uri, scope=None, loop=None, on_update=None):
-	
+
 		self.client_id = client_id
 		self.client_secret = client_secret
 		self.redirect_uri = redirect_uri
@@ -92,7 +96,7 @@ class OAuth:
 
 			if resp.status != 200:
 				raise RefreshTokenFailed(resp, ': '.join(data.values()))
-			
+
 			self._access_token = data['access_token']
 
 			if callable(self.on_update[0]):
@@ -119,7 +123,7 @@ async def easy_auth(client_id, client_secret, scope, cache_file):
 	:param cache_file: JSON file to store the access and refresh tokens in.
 	:return:
 	'''
-	
+
 	import json
 
 	auth = OAuth(

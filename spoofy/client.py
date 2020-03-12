@@ -1,39 +1,22 @@
-import asyncio, logging
+import logging
 from datetime import timedelta
+from typing import List, Optional
 
-from .object import Object
-from .playlist import Playlist, FullPlaylist, SimplePlaylist
-from .track import Track, FullTrack, PlaylistTrack, SimpleTrack
-from .artist import Artist, FullArtist, SimpleArtist
 from .album import Album, FullAlbum, SimpleAlbum
-from .user import PublicUser, PrivateUser
-
-from .device import Device
-from .playing import CurrentlyPlaying, CurrentlyPlayingContext
+from .artist import Artist, FullArtist, SimpleArtist
 from .audiofeatures import AudioFeatures
-
-from .pager import Pager, SearchPager, CursorBasedPaging
-from .exceptions import SpoofyException, NotFound
-from .utils import SliceIterator
-
+from .device import Device
+from .exceptions import NotFound, SpoofyException
 from .http import HTTP
+from .object import Object
+from .pager import CursorBasedPaging, Pager, SearchPager
+from .playing import CurrentlyPlaying, CurrentlyPlayingContext
+from .playlist import FullPlaylist, Playlist, SimplePlaylist
+from .track import FullTrack, PlaylistTrack, SimpleTrack, Track
+from .user import PrivateUser, PublicUser
+from .utils import subslice
 
 log = logging.getLogger(__name__)
-
-
-def as_id(func):
-	async def inner(*a, **kw):
-		a = list(a)
-		for idx, val in enumerate(a):
-			if isinstance(val, Object):
-				a[idx] = val.id
-
-		for key, val in kw.items():
-			if isinstance(val, Object):
-				kw[key] = val.id
-
-		return await func(*a, **kw)
-	return inner
 
 
 class Client:
@@ -100,7 +83,7 @@ class Client:
 		log.info('Refreshing tokens')
 		self.auth.refresh()
 
-	async def get_player(self, **kwargs):
+	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:
 		'''
 		Get a context for what user is currently playing.
 
@@ -112,12 +95,12 @@ class Client:
 
 		return CurrentlyPlayingContext(self, data)
 
-	async def player_currently_playing(self, **kwargs):
+	async def player_currently_playing(self, **kwargs) -> CurrentlyPlaying:
 		data = await self.http.player_currently_playing(**kwargs)
 
 		return CurrentlyPlaying(self, data)
 
-	async def get_devices(self):
+	async def get_devices(self) -> List[Device]:
 		'''
 		Get a list of user devices.
 
@@ -214,7 +197,7 @@ class Client:
 
 		await self.http.player_shuffle(state, self._get_id(device))
 
-	async def search(self, *types, q, limit=10, **kwargs):
+	async def search(self, *types, q, limit=10, **kwargs) -> dict:
 		'''
 		Searches for tracks, artists, albums and/or playlists.
 
@@ -258,7 +241,7 @@ class Client:
 
 		return results
 
-	async def search_tracks(self, q=None, limit=20):
+	async def search_tracks(self, q=None, limit=20) -> List[SimpleTrack]:
 		'''
 		Alias for ``Client.search(spoofy.Track, ...)``
 
@@ -268,7 +251,7 @@ class Client:
 		results = await self.search(Track, q=q, limit=limit)
 		return results['tracks']
 
-	async def search_artists(self, q=None, limit=20):
+	async def search_artists(self, q=None, limit=20) -> List[FullArtist]:
 		'''
 		Alias for ``Client.search(spoofy.Artist, ...)``
 
@@ -278,7 +261,7 @@ class Client:
 		results = await self.search(Artist, q=q, limit=limit)
 		return results['artists']
 
-	async def search_albums(self, q=None, limit=20, **kwargs):
+	async def search_albums(self, q=None, limit=20, **kwargs) -> List[SimpleAlbum]:
 		'''
 		Alias for ``Client.search(spoofy.Album, ...)``
 
@@ -288,7 +271,7 @@ class Client:
 		results = await self.search(Album, q=q, limit=limit, **kwargs)
 		return results['albums']
 
-	async def search_playlists(self, q=None, limit=20):
+	async def search_playlists(self, q=None, limit=20) -> List[SimplePlaylist]:
 		'''
 		Alias for ``Client.search(spoofy.Playlist, ...)``
 
@@ -298,43 +281,47 @@ class Client:
 		results = await self.search(Playlist, q=q, limit=limit)
 		return results['playlists']
 
-	async def search_track(self, q=None):
+	async def search_track(self, q=None) -> SimpleTrack:
 		'''
 		Returns the top track for the query.
 
 		:return: :class:`SimpleTrack` or None
 		'''
 
-		return (await self.search_tracks(q=q, limit=1))[0]
+		results = await self.search_tracks(q=q, limit=1)
+		return results[0] if results else None
 
-	async def search_artist(self, q=None):
+	async def search_artist(self, q=None) -> FullArtist:
 		'''
 		Returns the top artist for the query.
 
 		:return: :class:`SimpleArtist` or None
 		'''
 
-		return (await self.search_artists(q=q, limit=1))[0]
+		results = await self.search_artists(q=q, limit=1)
+		return results[0] if results else None
 
-	async def search_album(self, q=None):
+	async def search_album(self, q=None) -> SimpleAlbum:
 		'''
 		Returns the top album for the query.
 
 		:return: :class:`SimpleAlbum`
 		'''
 
-		return (await self.search_albums(q=q, limit=1))[0]
+		results = await self.search_albums(q=q, limit=1)
+		return results[0] if results else None
 
-	async def search_playlist(self, q=None):
+	async def search_playlist(self, q=None) -> SimplePlaylist:
 		'''
 		Returns the top playlist for the query.
 
 		:return: :class:`SimplePlaylist`
 		'''
 
-		return (await self.search_playlists(q=q, limit=1))[0]
+		results = await self.search_playlists(q=q, limit=1)
+		return results[0] if results else None
 
-	async def get_me(self):
+	async def get_me(self) -> PrivateUser:
 		'''
 		Gets the current user.
 
@@ -370,7 +357,7 @@ class Client:
 
 		return tracks
 
-	async def get_me_top_artists(self, limit=20, offset=0, time_range='medium_term'):
+	async def get_me_top_artists(self, limit=20, offset=0, time_range='medium_term') -> List[SimpleArtist]:
 		'''
 		Get the top artists of the current user.
 
@@ -394,7 +381,7 @@ class Client:
 
 		return artists
 
-	async def get_user(self, user_id):
+	async def get_user(self, user_id) -> Optional[PublicUser]:
 		'''
 		Get a user.
 
@@ -409,7 +396,9 @@ class Client:
 
 		return PublicUser(self, data)
 
-	async def create_playlist(self, user, name='Unnamed playlist', description=None, public=False, collaborative=False):
+	async def create_playlist(
+			self, user, name='Unnamed playlist', description=None, public=False, collaborative=False
+	) -> FullPlaylist:
 		'''
 		Create a new playlist.
 
@@ -424,7 +413,7 @@ class Client:
 		data = await self.http.create_playlist(user, name, description, public, collaborative)
 
 		playlist = FullPlaylist(self, data)
-		playlist._tracks = {}
+		playlist._tracks = dict()
 
 		return playlist
 
@@ -469,10 +458,10 @@ class Client:
 				track = 'spotify:track:' + track
 			tracks_fin.append(track)
 
-		for slice in SliceIterator(tracks_fin, 100):
+		for slice in subslice(tracks_fin, 100):
 			await self.http.playlist_add_tracks(playlist, slice, position=position)
 
-	async def get_playlist(self, playlist_id):
+	async def get_playlist(self, playlist_id) -> Optional[FullPlaylist]:
 		'''
 		Get a pre-existing playlist.
 
@@ -490,7 +479,7 @@ class Client:
 
 		return playlist
 
-	async def get_playlist_tracks(self, playlist):
+	async def get_playlist_tracks(self, playlist) -> List[PlaylistTrack]:
 		'''
 		Get tracks from a playlist.
 
@@ -502,14 +491,14 @@ class Client:
 
 		data = await self.http.get_playlist_tracks(playlist)
 
-		tracks = []
+		tracks = list()
 
 		async for track in Pager(self.http, data):
 			tracks.append(PlaylistTrack(self, track))
 
 		return tracks
 
-	async def get_user_playlists(self, user):
+	async def get_user_playlists(self, user) -> List[SimplePlaylist]:
 		'''
 		Get a list of attainable playlists a user owns.
 
@@ -536,7 +525,7 @@ class Client:
 
 		return playlists
 
-	async def get_track(self, track_id):
+	async def get_track(self, track_id) -> Optional[FullTrack]:
 		'''
 		Get a track.
 
@@ -551,7 +540,7 @@ class Client:
 
 		return FullTrack(self, data)
 
-	async def get_tracks(self, *track_ids):
+	async def get_tracks(self, *track_ids) -> List[Optional[FullTrack]]:
 		'''
 		Get several tracks.
 
@@ -561,7 +550,7 @@ class Client:
 
 		tracks = []
 
-		for slice in SliceIterator(track_ids, 50):
+		for slice in subslice(track_ids, 50):
 			data = await self.http.get_tracks(slice)
 
 			for track_obj in data['tracks']:
@@ -572,7 +561,7 @@ class Client:
 
 		return tracks
 
-	async def get_audio_features(self, track):
+	async def get_audio_features(self, track) -> Optional[AudioFeatures]:
 		'''
 		Get 'Audio Features' of a track.
 
@@ -589,7 +578,7 @@ class Client:
 
 		return AudioFeatures(self, data)
 
-	async def get_artist(self, artist_id):
+	async def get_artist(self, artist_id) -> Optional[FullArtist]:
 		'''
 		Get an artist.
 
@@ -604,7 +593,7 @@ class Client:
 
 		return FullArtist(self, data)
 
-	async def get_artist_albums(self, artist_id, limit=50, **kwargs):
+	async def get_artist_albums(self, artist_id, limit=50, **kwargs) -> List[SimpleAlbum]:
 		'''
 		Get an artist's albums
 		:param str artist_id: Spotify ID of artist.
@@ -612,19 +601,20 @@ class Client:
 		:param kwargs: other query params for this method
 		:return: List[:class:`SimpleAlbum`]
 		'''
+
+		albums = []
+
 		try:
 			data = await self.http.get_artist_albums(artist_id, limit=limit if limit < 50 else 50, **kwargs)
 		except NotFound:
-			return None
-
-		albums = []
+			return albums
 
 		async for album_obj in Pager(self.http, data, limit):
 			albums.append(SimpleAlbum(self, album_obj))
 
 		return albums
 
-	async def get_artists(self, *artist_ids):
+	async def get_artists(self, *artist_ids) -> List[Optional[FullArtist]]:
 		'''
 		Get several artists.
 
@@ -634,7 +624,7 @@ class Client:
 
 		artists = []
 
-		for slice in SliceIterator(artist_ids, 50):
+		for slice in subslice(artist_ids, 2):
 			data = await self.http.get_artists(slice)
 
 			for artist_obj in data['artists']:
@@ -645,7 +635,7 @@ class Client:
 
 		return artists
 
-	async def get_artist_top_tracks(self, artist, market='from_token'):
+	async def get_artist_top_tracks(self, artist, market='from_token') -> List[FullTrack]:
 		'''
 		Returns the top tracks for an artist.
 
@@ -659,12 +649,13 @@ class Client:
 		data = await self.http.get_artist_top_tracks(artist_id, market=market)
 
 		tracks = []
+
 		for track_obj in data['tracks']:
 			tracks.append(FullTrack(self, track_obj))
 
 		return tracks
 
-	async def get_artist_related_artists(self, artist):
+	async def get_artist_related_artists(self, artist) -> List[FullArtist]:
 		'''
 		Get an artists related artists.
 
@@ -677,12 +668,13 @@ class Client:
 		data = await self.http.get_artist_related_artists(artist_id)
 
 		artists = []
+
 		for artist_obj in data['artists']:
 			artists.append(FullArtist(self, artist_obj))
 
 		return artists
 
-	async def get_album(self, album_id, **kwargs):
+	async def get_album(self, album_id, **kwargs) -> Optional[FullAlbum]:
 		'''
 		Get an album.
 
@@ -701,7 +693,7 @@ class Client:
 
 		return album
 
-	async def get_albums(self, *album_ids, **kwargs):
+	async def get_albums(self, *album_ids, **kwargs) -> List[Optional[FullAlbum]]:
 		'''
 		Get several albums.
 
@@ -726,7 +718,7 @@ class Client:
 
 		return albums
 
-	async def get_album_tracks(self, album, **kwargs):
+	async def get_album_tracks(self, album, **kwargs) -> List[SimpleTrack]:
 		'''
 		Get tracks from an album.
 
@@ -746,23 +738,24 @@ class Client:
 
 		return tracks
 
-	async def get_followed_artists(self, type='artist', limit=float('inf')):
+	async def get_followed_artists(self, type='artist', limit=float('inf')) -> List[SimpleArtist]:
 		'''
 		Get user's followed artists
 
 		:param str type: The ID type: currently only artist is supported.
 		:param int limit: The maximum number of items to return. Default - infinity
-		:return: list[:class:`SimpleArtist`]
+		:return: List[:class:`SimpleArtist`]
 		'''
+
 		data = await self.http.get_followed_artists(type=type, limit=limit if limit < 50 else 50)
 
 		artists = []
 
-		if type == 'artist':
-			async for artist_obj in CursorBasedPaging(self.http, data, 'artists', limit):
-				artists.append(SimpleArtist(self, artist_obj))
-		else:
+		if type != 'artist':
 			raise SpoofyException('Currently only artist is supported.')
+
+		async for artist_obj in CursorBasedPaging(self.http, data, 'artists', limit):
+			artists.append(SimpleArtist(self, artist_obj))
 
 		return artists
 

@@ -1,10 +1,8 @@
 from datetime import datetime, timedelta
 
-from .object import Object
 from .album import SimpleAlbum
-from .mixins import ExternalURLMixin, ArtistMixin, ExternalIDMixin
-
-from pprint import pprint
+from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
+from .object import Object
 
 
 class Track(Object, ExternalURLMixin, ArtistMixin):
