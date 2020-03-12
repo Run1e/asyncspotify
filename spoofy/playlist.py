@@ -3,40 +3,13 @@ from .object import Object
 from .user import PublicUser
 
 
-class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
-	'''
-	Represents a playlist object.
-	
-	id: str
-		Spotify ID of the playlist.
-	name: str
-		Name of the playlist.
-	tracks: List[:class:`SimpleTrack`]
-		All tracks in the playlist.
-	uri: str
-		Spotify URI of the playlist.
-	link: str
-		Spotify URL of the playlist.
-	snapshot_id: str
-		Spotify ID of the current playlist snapshot. Read about snapshots `here. <https://developer.spotify.com/documentation/general/guides/working-with-playlists/>`_
-	collaborative: bool
-		Whether the playlist is collaborative.
-	public: bool
-		Whether the playlist is public.
-	owner: :class:`PublicUser`
-		Owner of the playlist.
-	external_urls: dict
-		Dictionary that maps type to url.
-	images: List[:class:`Image`]
-		List of associated images.
-	'''
-
+class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 	_type = 'playlist'
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
-		self._tracks = {}
+		self.tracks = []
 
 		self.snapshot_id = data.pop('snapshot_id')
 		self.collaborative = data.pop('collaborative')
@@ -86,19 +59,40 @@ class Playlist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
 		await self._client.playlist_add_tracks(self.id, tracks, position=position)
 
 
-class SimplePlaylist(Playlist):
+class SimplePlaylist(_BasePlaylist):
 	'''
-	Alias of :class:`Playlist`
+	Represents a playlist object.
+
+	id: str
+		Spotify ID of the playlist.
+	name: str
+		Name of the playlist.
+	tracks: List[:class:`SimpleTrack`]
+		All tracks in the playlist.
+	uri: str
+		Spotify URI of the playlist.
+	link: str
+		Spotify URL of the playlist.
+	snapshot_id: str
+		Spotify ID of the current playlist snapshot. Read about snapshots `here. <https://developer.spotify.com/documentation/general/guides/working-with-playlists/>`_
+	collaborative: bool
+		Whether the playlist is collaborative.
+	public: bool
+		Whether the playlist is public.
+	owner: :class:`PublicUser`
+		Owner of the playlist.
+	external_urls: dict
+		Dictionary that maps type to url.
+	images: List[:class:`Image`]
+		List of associated images.
 	'''
 
-	pass
 
-
-class FullPlaylist(Playlist):
+class FullPlaylist(_BasePlaylist):
 	'''
 	Represents a complete playlist object.
 	
-	This type has some additional attributes not existent in :class:`Playlist` or :class:`SimplePlaylist`.
+	This type has some additional attributes not existent in :class:`SimplePlaylist`.
 	
 	description: str
 		Description of the playlist, as set by the owner.

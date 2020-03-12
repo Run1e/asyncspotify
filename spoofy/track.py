@@ -5,10 +5,42 @@ from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
 from .object import Object
 
 
-class Track(Object, ExternalURLMixin, ArtistMixin):
+class _BaseTrack(Object, ExternalURLMixin, ArtistMixin):
+	_type = 'track'
+
+	def __init__(self, client, data):
+		super().__init__(client, data)
+
+		self.available_markets = data.pop('available_markets', None)
+		self.disc_number = data.pop('disc_number')
+		self.explicit = data.pop('explicit')
+		self.preview_url = data.pop('preview_url')
+		self.track_number = data.pop('track_number')
+		self.is_local = data.pop('is_local')
+
+		self.duration = timedelta(milliseconds=data.pop('duration_ms'))
+
+		self._fill_external_urls(data.pop('external_urls'))
+		self._fill_artists(data.pop('artists'))
+
+	def avaliable_in(self, market):
+		return market in self.available_markets
+
+	async def get_features(self):
+		'''
+		Get 'Audio Features' of the track.
+		
+		:param track: :class:`Track` instance or Spotify ID of track.
+		:return: :class:`AudioFeatures`
+		'''
+
+		return await self._client.get_audio_features(self.id)
+
+
+class SimpleTrack(_BaseTrack):
 	'''
 	Represents a Track object.
-	
+
 	id: str
 		Spotify ID of the track.
 	name: str
@@ -47,49 +79,12 @@ class Track(Object, ExternalURLMixin, ArtistMixin):
 		Whether the track is from a local file.
 	'''
 
-	_type = 'track'
 
-	def __init__(self, client, data):
-		super().__init__(client, data)
-
-		self.available_markets = data.pop('available_markets', None)
-		self.disc_number = data.pop('disc_number')
-		self.explicit = data.pop('explicit')
-		self.preview_url = data.pop('preview_url')
-		self.track_number = data.pop('track_number')
-		self.is_local = data.pop('is_local')
-
-		self.duration = timedelta(milliseconds=data.pop('duration_ms'))
-
-		self._fill_external_urls(data.pop('external_urls'))
-		self._fill_artists(data.pop('artists'))
-
-	def avaliable_in(self, market):
-		return market in self.available_markets
-
-	async def get_features(self):
-		'''
-		Get 'Audio Features' of the track.
-		
-		:param track: :class:`Track` instance or Spotify ID of track.
-		:return: :class:`AudioFeatures`
-		'''
-
-		return await self._client.get_audio_features(self.id)
-
-
-class SimpleTrack(Track):
-	'''
-	Alias of :class:`Track`
-	'''
-	pass
-
-
-class FullTrack(Track, ExternalIDMixin):
+class FullTrack(_BaseTrack, ExternalIDMixin):
 	'''
 	Represents a complete Track object.
 	
-	This type has some additional attributes not existent in :class:`Track` or :class:`SimpleTrack`.
+	This type has some additional attributes not existent in :class:`SimpleTrack`.
 	
 	album: :class:`SimpleAlbum`
 		An instance of the album the track appears on.

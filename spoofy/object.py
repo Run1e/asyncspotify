@@ -20,7 +20,7 @@ class Object:
 		self._client = client
 		self.id = data.pop('id', None)
 		self.name = data.pop('name', None)
-		self._href = data.pop('href', None)
+		self.href = data.pop('href', None)
 		self.uri = data.pop('uri', None)
 
 	@property

@@ -1,5 +1,5 @@
 """
-A Python library for interacting asyncronously with the Spotify API
+A Python library for interacting asynchronously with the Spotify API
 """
 
 __title__ = 'spoofy'
@@ -15,12 +15,12 @@ from . import utils
 from .exceptions import *
 
 from .object import Object
-from .playlist import Playlist, SimplePlaylist, FullPlaylist
-from .track import Track, SimpleTrack, FullTrack, PlaylistTrack
-from .album import Album, SimpleAlbum, FullAlbum
+from .playlist import SimplePlaylist, FullPlaylist
+from .track import SimpleTrack, FullTrack, PlaylistTrack
+from .album import SimpleAlbum, FullAlbum
 from .image import Image
-from .artist import Artist, SimpleArtist, FullArtist
-from .user import User, PrivateUser, PublicUser
+from .artist import SimpleArtist, FullArtist
+from .user import PrivateUser, PublicUser
 
 from .device import Device
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext

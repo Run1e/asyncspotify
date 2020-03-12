@@ -2,8 +2,8 @@ import logging
 from datetime import timedelta
 from typing import List, Optional
 
-from .album import Album, FullAlbum, SimpleAlbum
-from .artist import Artist, FullArtist, SimpleArtist
+from .album import FullAlbum, SimpleAlbum
+from .artist import FullArtist, SimpleArtist
 from .audiofeatures import AudioFeatures
 from .device import Device
 from .exceptions import NotFound, SpoofyException
@@ -11,8 +11,8 @@ from .http import HTTP
 from .object import Object
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
-from .playlist import FullPlaylist, Playlist, SimplePlaylist
-from .track import FullTrack, PlaylistTrack, SimpleTrack, Track
+from .playlist import FullPlaylist, SimplePlaylist
+from .track import FullTrack, PlaylistTrack, SimpleTrack
 from .user import PrivateUser, PublicUser
 from .utils import subslice
 
@@ -243,42 +243,42 @@ class Client:
 
 	async def search_tracks(self, q=None, limit=20) -> List[SimpleTrack]:
 		'''
-		Alias for ``Client.search(spoofy.Track, ...)``
+		Alias for ``Client.search('track', ...)``
 
 		:return: List[:class:`SimpleTrack`]
 		'''
 
-		results = await self.search(Track, q=q, limit=limit)
+		results = await self.search('track', q=q, limit=limit)
 		return results['tracks']
 
 	async def search_artists(self, q=None, limit=20) -> List[FullArtist]:
 		'''
-		Alias for ``Client.search(spoofy.Artist, ...)``
+		Alias for ``Client.search('artist, ...)``
 
-		:return: List[:class:`SimpleArtist`]
+		:return: List[:class:`FullArtist`]
 		'''
 
-		results = await self.search(Artist, q=q, limit=limit)
+		results = await self.search('artist', q=q, limit=limit)
 		return results['artists']
 
 	async def search_albums(self, q=None, limit=20, **kwargs) -> List[SimpleAlbum]:
 		'''
-		Alias for ``Client.search(spoofy.Album, ...)``
+		Alias for ``Client.search('album', ...)``
 
 		:return: List[:class:`SimpleAlbum`]
 		'''
 
-		results = await self.search(Album, q=q, limit=limit, **kwargs)
+		results = await self.search('album', q=q, limit=limit, **kwargs)
 		return results['albums']
 
 	async def search_playlists(self, q=None, limit=20) -> List[SimplePlaylist]:
 		'''
-		Alias for ``Client.search(spoofy.Playlist, ...)``
+		Alias for ``Client.search('playlist', ...)``
 
 		:return: List[:class:`SimplePlaylist`]
 		'''
 
-		results = await self.search(Playlist, q=q, limit=limit)
+		results = await self.search('playlist', q=q, limit=limit)
 		return results['playlists']
 
 	async def search_track(self, q=None) -> SimpleTrack:
@@ -491,7 +491,7 @@ class Client:
 
 		data = await self.http.get_playlist_tracks(playlist)
 
-		tracks = list()
+		tracks = []
 
 		async for track in Pager(self.http, data):
 			tracks.append(PlaylistTrack(self, track))
@@ -540,7 +540,7 @@ class Client:
 
 		return FullTrack(self, data)
 
-	async def get_tracks(self, *track_ids) -> List[Optional[FullTrack]]:
+	async def get_tracks(self, *track_ids) -> List[FullTrack]:
 		'''
 		Get several tracks.
 
@@ -614,7 +614,7 @@ class Client:
 
 		return albums
 
-	async def get_artists(self, *artist_ids) -> List[Optional[FullArtist]]:
+	async def get_artists(self, *artist_ids) -> List[FullArtist]:
 		'''
 		Get several artists.
 
@@ -693,7 +693,7 @@ class Client:
 
 		return album
 
-	async def get_albums(self, *album_ids, **kwargs) -> List[Optional[FullAlbum]]:
+	async def get_albums(self, *album_ids, **kwargs) -> List[FullAlbum]:
 		'''
 		Get several albums.
 
@@ -702,10 +702,9 @@ class Client:
 		:return: List[:class:`FullAlbum`]
 		'''
 
-		chunks = [album_ids[x:x + 20] for x in range(0, len(album_ids), 20)]
 		albums = []
 
-		for chunk in chunks:
+		for chunk in subslice(album_ids, 20):
 			data = await self.http.get_albums(chunk, **kwargs)
 
 			for album_obj in data['albums']:
@@ -768,7 +767,5 @@ class Client:
 		:param kwargs: other query params for this method
 		'''
 
-		chunks = [ids[x:x + 50] for x in range(0, len(ids), 50)]
-
-		for chunk in chunks:
+		for chunk in subslice(ids, 50):
 			await self.http.following(type=type, ids=chunk, **kwargs)

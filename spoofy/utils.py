@@ -31,13 +31,13 @@ def _is_match(item, kwargs):
 
 
 def subslice(iter, step):
-	group = list()
+	group = []
 
 	for idx, item in enumerate(iter):
 		if idx % step == 0:
 			if group:
 				yield group
-			group.clear()
+				group.clear()
 
 		group.append(item)
 

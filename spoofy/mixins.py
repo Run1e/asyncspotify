@@ -5,7 +5,6 @@ from .object import Object
 class ArtistMixin:
 	def _fill_artists(self, artists):
 		from .artist import SimpleArtist
-
 		self.artists = []
 		for art in artists:
 			self.artists.append(SimpleArtist(self._client, art))
@@ -37,22 +36,16 @@ class ExternalURLMixin:
 
 class TrackMixin:
 	@property
-	def tracks(self):
-		return list(self._tracks.values())
-
-	@property
 	def has_track(self, track):
 		if isinstance(track, Object):
 			track = track.id
-		return track.id in self._tracks
+		return any(track == t.id for t in self.tracks)
 
 	async def _fill_tracks(self, object_type, pager):
 		async for object in pager:
 			# TODO: handle this case nicer?
-			if object['track'] is None:
-				continue
-			trck = object_type(self._client, object)
-			self._tracks[trck.id] = trck
+			if object['track'] is not None:
+				self.tracks.append(object_type(self._client, object))
 
 
 class UserMixin:

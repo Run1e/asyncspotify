@@ -2,26 +2,7 @@ from .mixins import ExternalURLMixin, ImageMixin
 from .object import Object
 
 
-class User(Object, ExternalURLMixin, ImageMixin):
-	'''
-	Represents a User object.
-	
-	id: str
-		Spotify ID of the user.
-	name: str
-		Name of the user. Also aliased to the ``display_name`` attribute.
-	images: List[:class:`Image`] or None
-		List of associated images, such as the users profile picture.
-	uri: str
-		Spotify URI of the user.
-	link: str
-		Spotify URL of the user.
-	follower_count: int or None
-		Follower count of the user.
-	external_urls: dict
-		Dictionary that maps type to url.
-	'''
-
+class _BaseUser(Object, ExternalURLMixin, ImageMixin):
 	_type = 'user'
 
 	def __init__(self, client, data):
@@ -50,14 +31,28 @@ class User(Object, ExternalURLMixin, ImageMixin):
 		return await self._client.get_user_playlists(self.id)
 
 
-class PublicUser(User):
+class PublicUser(_BaseUser):
 	'''
-	Alias of :class:`User`
+	Represents a User object.
+
+	id: str
+		Spotify ID of the user.
+	name: str
+		Name of the user. Also aliased to the ``display_name`` attribute.
+	images: List[:class:`Image`] or None
+		List of associated images, such as the users profile picture.
+	uri: str
+		Spotify URI of the user.
+	link: str
+		Spotify URL of the user.
+	follower_count: int or None
+		Follower count of the user.
+	external_urls: dict
+		Dictionary that maps type to url.
 	'''
-	pass
 
 
-class PrivateUser(User):
+class PrivateUser(_BaseUser):
 	def __init__(self, client, data):
 		super().__init__(client, data)
 

@@ -2,22 +2,7 @@ from .mixins import ExternalURLMixin, ImageMixin
 from .object import Object
 
 
-class Artist(Object, ExternalURLMixin):
-	'''
-	Represents an Artist object.
-	
-	id: str
-		Spotify ID of the artist.
-	name: str
-		Name of the artist.
-	uri: str
-		Spotify URI of the artist.
-	link: str
-		Spotify URL of the artist.
-	external_urls: dict
-		Dictionary that maps type to url.
-	'''
-
+class _BaseArtist(Object, ExternalURLMixin):
 	_type = 'artist'
 
 	def __init__(self, client, data):
@@ -45,16 +30,28 @@ class Artist(Object, ExternalURLMixin):
 		return await self._client.get_artist_related_artists(self.id)
 
 
-class SimpleArtist(Artist):
-	'''Alias for :class:`Artist`'''
-	pass
+class SimpleArtist(_BaseArtist):
+	'''
+	Represents an Artist object.
+
+	id: str
+		Spotify ID of the artist.
+	name: str
+		Name of the artist.
+	uri: str
+		Spotify URI of the artist.
+	link: str
+		Spotify URL of the artist.
+	external_urls: dict
+		Dictionary that maps type to url.
+	'''
 
 
-class FullArtist(Artist, ImageMixin):
+class FullArtist(_BaseArtist, ImageMixin):
 	'''
 	Represents a complete Artist object.
 	
-	This type has some additional attributes not existent in :class:`Artist` or :class:`SimpleArtist`.
+	This type has some additional attributes not existent in :class:`SimpleArtist`.
 	
 	follow_count: int
 		Follow count of the artist.

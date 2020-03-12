@@ -4,40 +4,7 @@ from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin, ImageMixin, 
 from .object import Object
 
 
-class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
-	'''
-	Represents an Album object.
-	
-	id: str
-		Spotify ID of the album.
-	name: str
-		Name of the album.
-	tracks: List[:class:`Track`]
-		List of tracks on the album.
-	artists: List[:class:`Artist`]
-		List of artists that appear on the album.
-	images: List[:class:`Image`]
-		List of associated images, such as album cover in different sizes.
-	uri: str
-		Spotify URI of the album.
-	link: str
-		Spotify URL of the album.
-	type: str
-		Plaintext string of object type: ``album``.
-	album_type:
-		Type of album, e.g. ``album``, ``single`` or ``compilation``.
-	available_markets: List[str] or None
-		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
-	external_urls: dict
-		Dictionary that maps type to url.
-	release_date: `datetime <https://docs.python.org/3/library/datetime.html#module-datetime>`_
-		Date (and maybe time) of album release.
-	release_date_precision: str
-		Precision of ``release_date``. Can be ``year``, ``month``, or ``day``.
-	album_group: str or None
-		Type of album, e.g. ``album``, ``single``, ``compilation`` or ``appears_on``.
-	'''
-
+class _BaseAlbum(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 	_type = 'album'
 	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
 
@@ -68,19 +35,46 @@ class Album(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 		self._fill_images(data.pop('images'))
 
 
-class SimpleAlbum(Album):
+class SimpleAlbum(_BaseAlbum):
 	'''
-	Alias of :class:`Album`
+	Represents an Album object.
+
+	id: str
+		Spotify ID of the album.
+	name: str
+		Name of the album.
+	tracks: List[:class:`Track`]
+		List of tracks on the album.
+	artists: List[:class:`Artist`]
+		List of artists that appear on the album.
+	images: List[:class:`Image`]
+		List of associated images, such as album cover in different sizes.
+	uri: str
+		Spotify URI of the album.
+	link: str
+		Spotify URL of the album.
+	type: str
+		Plaintext string of object type: ``album``.
+	album_type:
+		Type of album, e.g. ``album``, ``single`` or ``compilation``.
+	available_markets: List[str] or None
+		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
+	external_urls: dict
+		Dictionary that maps type to url.
+	release_date: `datetime <https://docs.python.org/3/library/datetime.html#module-datetime>`_
+		Date (and maybe time) of album release.
+	release_date_precision: str
+		Precision of ``release_date``. Can be ``year``, ``month``, or ``day``.
+	album_group: str or None
+		Type of album, e.g. ``album``, ``single``, ``compilation`` or ``appears_on``.
 	'''
 
-	pass
 
-
-class FullAlbum(Album, ExternalIDMixin):
+class FullAlbum(_BaseAlbum, ExternalIDMixin):
 	'''
 	Represents a complete Album object.
 	
-	This type has some additional attributes not existent in :class:`Album` or :class:`SimpleAlbum`.
+	This type has some additional attributes not existent in :class:`SimpleAlbum`.
 	
 	genres: List[str]
 		List of genres associated with the album.
