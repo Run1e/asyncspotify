@@ -1,0 +1,10 @@
+.idea
+__pycache__
+build
+_build
+dist
+venv
+asd.py
+config.py
+tokens.json
+spoofy.egg-info

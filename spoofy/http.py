@@ -1,173 +1,200 @@
-import aiohttp, asyncio, logging
+import aiohttp
+import logging
 
+from asyncio import Lock, sleep
 import json as jsonserial
-
-from pprint import pprint
 
 from .exceptions import *
 
 log = logging.getLogger(__name__)
 
 
-class Request:
-	base = 'https://api.spotify.com/v1'
-	access_token = None
+class Route:
+	BASE = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, endpoint=None, id=None, query=None, data=None, json=None, headers=None):
+	def __init__(self, method, url, **params):
 		self.method = method
-		self.headers = {}
-		self.params = query
-		self.data = data
-		self.json = json
-		self.id = id
+		self.url = url if url.startswith('http') else '{0}/{1}'.format(self.BASE, url)
+		self.params = params
 
-		if endpoint:
-			self.url = '{}/{}'.format(self.base, endpoint)
-
-		if isinstance(headers, dict):
-			self.headers.update(headers)
-
-		if id:
-			self.url += '/' + id
-
-	def set_header(self, header, value):
-		self.headers[header] = value
+	def __repr__(self):
+		return '<Route method={0.method} url={0.url}>'.format(self)
 
 
 class HTTP:
-	max_attempts = 5
+	_attempts = 5
+	_base = 'https://api.spotify.com/v1'
 
 	def __init__(self, auth):
 		self.auth = auth
 		self.session = auth.session
-		self.lock = asyncio.Event()
+		self.lock = Lock()
 
-	async def request(self, req, attempt=0):
-		if attempt <= 5:
+	def access_header(self):
+		return dict(Authorization='Bearer {}'.format(self.auth.access_token))
 
-			req.set_header('Authorization', 'Bearer {}'.format(self.auth.access_token))
+	async def request(self, route, data=None, json=None, headers=None):
 
-			# stop new requests if a previous one caused a 429 which is still being awaited
-			if self.lock.is_set():
-				print('stopped!')
-				await self.lock.wait()
+		if headers:
+			headers.update(self.access_header())
+		else:
+			headers = self.access_header()
 
-			async with self.session.request(req.method, req.url, params=req.params, data=req.data, json=req.json,
-											headers=req.headers) as resp:
-				log.debug('{0.status} {0.reason} - {0.method} {0.url}'.format(resp))
+		kw = dict(method=route.method, url=route.url, headers=headers)
 
-				data = await resp.text()
-				error = None
+		if route.params:
+			kw['params'] = route.params
 
-				if resp.headers.get('Content-Type', '').startswith('application/json'):
-					data = jsonserial.loads(data)
+		if data:
+			kw['data'] = data
+
+		if json:
+			kw['json'] = json
+			kw['headers']['Content-Type'] = 'application/json'
+
+		async with self.lock:
+			for attempt in range(self._attempts):
+
+				async with self.session.request(**kw) as resp:
+					status_code = resp.status
+					headers = resp.headers
+					text = await resp.text()
+
+					try:
+						data = jsonserial.loads(text)
+					except jsonserial.JSONDecodeError:
+						data = None
+
+					if 200 <= status_code < 300:
+						return data
+
 					try:
 						error = data['error']['message']
-					except:
-						pass
+					except KeyError:
+						error = None
 
-				# success, simply return data
-				if 300 > resp.status >= 200:
-					return data
+					if status_code == 429:
+						retry_after = int(headers.get('Retry-After', 1)) + 1
+						log.warning('Rate limited. Retrying in {0} seconds.'.format(retry_after))
+						await sleep(retry_after)
+						continue
 
-				# rate limiting
-				if resp.status == 429:
-					self.lock.set()
-					await asyncio.sleep(delay=int(resp.headers['Retry-After']) + 1)
-					self.lock.clear()
-					return await self.request(req, attempt + 1)
+					elif status_code == 400:
+						raise BadRequest(resp, error)
 
-				if resp.status == 400:
-					raise BadRequest(resp, error)
-				elif resp.status == 401:
-					if error == 'The access token expired':
-						await self.auth.refresh()
-						return await self.request(req, attempt + 1)
-					else:
-						raise Unauthorized(resp, error)
-				elif resp.status == 403:
-					raise Forbidden(resp, error)
-				elif resp.status == 404:
-					raise NotFound(resp, error)
-				elif resp.status == 405:
-					raise NotAllowed(resp, error)
-		else:
-			raise HTTPException(req, 'Request failed after 5 attempts.')
+					elif status_code == 401:
+						if error == 'The access token expired':
+							await self.auth.refresh()
+							kw['headers'].update(self.access_header())
+							continue
+						else:
+							raise Unauthorized(resp, error)
+
+					elif status_code == 403:
+						raise Forbidden(resp, error)
+
+					elif status_code == 404:
+						raise NotFound(resp, error)
+
+					elif status_code == 405:
+						raise NotAllowed(resp, error)
+
+					elif status_code >= 500:
+						continue
+
+		raise HTTPException(resp, 'Request failed 5 times.')
 
 	async def get_player(self, **kwargs):
-		return await self.request(Request('GET', 'me/player', query=kwargs))
+		r = Route('GET', 'me/player', **kwargs)
+		return await self.request(r)
 
 	async def player_currently_playing(self, **kwargs):
-		return await self.request(Request('GET', 'me/player/currently-playing', query=kwargs))
+		r = Route('GET', 'me/player/currently-playing', **kwargs)
+		return await self.request(r)
 
 	async def get_devices(self):
-		return await self.request(Request('GET', 'me/player/devices'))
+		r = Route('GET', 'me/player/devices')
+		return await self.request(r)
 
 	async def player_next(self, device_id):
-		await self.request(Request('POST', 'me/player/next', query=dict(device=device_id) if device_id else None))
+		r = Route('POST', 'me/player/next', device=device_id)
+		await self.request(r)
 
 	async def player_prev(self, device_id):
-		await self.request(Request('POST', 'me/player/previous', query=dict(device=device_id) if device_id else None))
+		r = Route('POST', 'me/player/previous', device=device_id)
+		await self.request(r)
 
 	async def player_play(self, device_id, **kwargs):
-		await self.request(Request('PUT', 'me/player/play', query=dict(device=device_id) if device_id else None, json=kwargs))
+		r = Route('PUT', 'me/player/play', device=device_id)
+		await self.request(r, json=kwargs)
 
 	async def player_pause(self, device_id):
-		await self.request(Request('PUT', 'me/player/pause', query=dict(device=device_id) if device_id else None))
+		r = Route('PUT', 'me/player/pause', device=device_id)
+		await self.request(r)
 
 	async def player_seek(self, time, device_id):
 		query = dict(position_ms=time)
 		if device_id is not None:
 			query['device'] = device_id
-		await self.request(Request('PUT', 'me/player/seek', query=query))
+		r = Route('PUT', 'me/player/seek', **query)
+		await self.request(r)
 
 	async def player_repeat(self, state, device_id):
 		query = dict(state=state)
 		if device_id is not None:
 			query['device'] = device_id
-		await self.request(Request('PUT', 'me/player/repeat', query=query))
+		r = Route('PUT', 'me/player/repeat', **query)
+		await self.request(r)
 
 	async def player_volume(self, volume, device_id):
 		query = dict(volume_percent=volume)
 		if device_id is not None:
 			query['device'] = device_id
-		await self.request(Request('PUT', 'me/player/volume', query=query))
+		r = Route('PUT', 'me/player/volume', **query)
+		await self.request(r)
 
 	async def player_shuffle(self, state, device_id):
 		query = dict(state='true' if state else 'false')
 		if device_id is not None:
 			query['device'] = device_id
 
-		await self.request(Request('PUT', 'me/player/shuffle', query=query))
+		r = Route('PUT', 'me/player/shuffle', **query)
+		await self.request(r)
 
 	async def search(self, types, query, limit, **kwargs):
-		return await self.request(
-			Request('GET', 'search', query=dict(type=','.join(types), q=query, limit=limit, **kwargs)))
+		r = Route('GET', 'search', type=','.join(types), q=query, limit=limit, **kwargs)
+		return await self.request(r)
 
 	async def get_me(self):
-		return await self.request(Request('GET', 'me'))
+		r = Route('GET', 'me')
+		return await self.request(r)
 
 	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term'):
-		return await self.request(Request('GET', 'me/top/tracks', query=dict(limit=limit, offset=offset, time_range=time_range)))
+		r = Route('GET', 'me/top/tracks', limit=limit, offset=offset, time_range=time_range)
+		return await self.request(r)
 
 	async def get_me_top_artists(self, limit=20, offset=0, time_range='medium_term'):
-		return await self.request(Request('GET', 'me/top/artists', query=dict(limit=limit, offset=offset, time_range=time_range)))
+		r = Route('GET', 'me/top/artists', limit=limit, offset=offset, time_range=time_range)
+		return await self.request(r)
 
 	async def get_playlist(self, playlist_id):
-		return await self.request(Request('GET', 'playlists', id=playlist_id))
+		r = Route('GET', 'playlists/{0}'.format(playlist_id))
+		return await self.request(r)
 
 	async def get_me_playlists(self):
-		return
+		raise NotImplemented
 
 	async def get_user_playlists(self, user_id):
-		return await self.request(Request('GET', 'users/{}/playlists'.format(user_id), query={'limit': 50}))
+		r = Route('GET', 'users/{0}/playlists'.format(user_id), limit=50)
+		return await self.request(r)
 
 	async def get_playlist_tracks(self, playlist_id):
-		return await self.request(Request('GET', 'playlists/{}/tracks'.format(playlist_id)))
+		r = Route('GET', 'playlists/{0}/tracks'.format(playlist_id))
+		return await self.request(r)
 
 	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
-		return await self.request(Request('POST', 'playlists/{}/tracks'.format(playlist_id),
-										  json=dict(uris=track_ids, position=position)))
+		req = Route('POST', 'playlists/{0}/tracks'.format(playlist_id))
+		return await self.request(req, json=dict(uris=track_ids, position=position))
 
 	async def create_playlist(self, user_id, name, description, public, collaborative):
 		data = dict(
@@ -177,59 +204,76 @@ class HTTP:
 			collaborative=collaborative
 		)
 
-		return await self.request(Request('POST', 'users/{}/playlists'.format(user_id),
-										  headers={'Content-Type': 'application/json'},
-										  json=data))
+		r = Route('POST', 'users/{}/playlists'.format(user_id))
+
+		return await self.request(r, json=data)
 
 	async def edit_playlist(self, playlist_id, name, description, public, collaborative):
-		new = {}
+		new = dict()
+
 		for key, value in dict(name=name, description=description, public=public, collaborative=collaborative).items():
 			if value is not None:
 				new[key] = value
 
-		await self.request(Request('PUT', 'playlists', id=playlist_id, json=new))
+		r = Route('PUT', 'playlists/{0}'.format(playlist_id))
+
+		await self.request(r, json=new)
 
 	async def get_user(self, user_id):
-		return await self.request(Request('GET', 'users', id=user_id))
+		r = Route('GET', 'users/{0}'.format(user_id))
+		return await self.request(r)
 
 	async def get_track(self, track_id):
-		return await self.request(Request('GET', 'tracks', id=track_id))
+		r = Route('GET', 'tracks/{0}'.format(track_id))
+		return await self.request(r)
 
 	async def get_tracks(self, track_ids):
-		return await self.request(Request('GET', 'tracks', query=dict(ids=','.join(track_ids))))
+		r = Route('GET', 'tracks', ids=','.join(track_ids))
+		return await self.request(r)
 
 	async def get_audio_features(self, track_id):
-		return await self.request(Request('GET', 'audio-features/{}'.format(track_id)))
+		r = Route('GET', 'audio-features/{0}'.format(track_id))
+		return await self.request(r)
 
 	async def get_artist(self, artist_id):
-		return await self.request(Request('GET', 'artists', id=artist_id))
+		r = Route('GET', 'artists/{0}'.format(artist_id))
+		return await self.request(r)
 
 	async def get_artist_albums(self, artist_id, limit=50, **kwargs):
-		return await self.request(Request('GET', 'artists/{}/albums'.format(artist_id), query=dict(limit=limit, **kwargs)))
+		req = Route('GET', 'artists/{0}/albums'.format(artist_id), limit=limit, **kwargs)
+		return await self.request(req)
 
 	async def get_artists(self, artist_ids):
-		return await self.request(Request('GET', 'artists', query=dict(ids=','.join(artist_ids))))
+		r = Route('GET', 'artists', ids=','.join(artist_ids))
+		return await self.request(r)
 
 	async def get_artist_top_tracks(self, artist_id, market):
-		return await self.request(Request('GET', 'artists/{}/top-tracks'.format(artist_id), query=dict(market=market)))
+		r = Route('GET', 'artists/{0}/top-tracks'.format(artist_id), market=market)
+		return await self.request(r)
 
 	async def get_artist_related_artists(self, artist_id):
-		return await self.request(Request('GET', 'artists/{}/related-artists'.format(artist_id)))
+		r = Route('GET', 'artists/{0}/related-artists'.format(artist_id))
+		return await self.request(r)
 
 	async def get_album(self, album_id, **kwargs):
-		return await self.request(Request('GET', 'albums', id=album_id, query=kwargs))
+		r = Route('GET', 'albums/{0}'.format(album_id), **kwargs)
+		return await self.request(r)
 
 	async def get_albums(self, album_ids, **kwargs):
-		return await self.request(Request('GET', 'albums', query=dict(ids=','.join(album_ids), **kwargs)))
+		r = Route('GET', 'albums', ids=','.join(album_ids), **kwargs)
+		return await self.request(r)
 
 	async def get_album_tracks(self, album_id, **kwargs):
-		return await self.request(Request('GET', 'albums/{}/tracks'.format(album_id), query=dict(limit=50, **kwargs)))
+		r = Route('GET', 'albums/{0}/tracks'.format(album_id), limit=50, **kwargs)
+		return await self.request(r)
 
 	async def get_followed_artists(self, type='artist', limit=50):
-		return await self.request(Request('GET', 'me/following', query=dict(limit=limit, type=type)))
+		r = Route('GET', 'me/following', type=type, limit=limit)
+		return await self.request(r)
 
 	async def following(self, type, ids, **kwargs):
-		await self.request(Request('PUT', 'me/following', query=dict(type=type, ids=','.join(ids), **kwargs)))
+		r = Route('PUT', 'me/following', type=type, ids=','.join(ids), **kwargs)
+		await self.request(r)
 
 	async def close_session(self):
 		await self.session.close()

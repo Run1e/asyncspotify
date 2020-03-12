@@ -18,9 +18,22 @@ from .utils import SliceIterator
 
 from .http import HTTP
 
-from pprint import pprint
-
 log = logging.getLogger(__name__)
+
+
+def as_id(func):
+	async def inner(*a, **kw):
+		a = list(a)
+		for idx, val in enumerate(a):
+			if isinstance(val, Object):
+				a[idx] = val.id
+
+		for key, val in kw.items():
+			if isinstance(val, Object):
+				kw[key] = val.id
+
+		return await func(*a, **kw)
+	return inner
 
 
 class Client:
@@ -71,6 +84,9 @@ class Client:
 
 	async def __aexit__(self, exc_type, exc_val, exc_tb):
 		await self.close_session()
+
+	async def close_session(self):
+		await self.http.close_session()
 
 	def _get_id(self, obj):
 		if isinstance(obj, Object):
@@ -763,6 +779,3 @@ class Client:
 
 		for chunk in chunks:
 			await self.http.following(type=type, ids=chunk, **kwargs)
-
-	async def close_session(self):
-		await self.http.close_session()

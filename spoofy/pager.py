@@ -1,4 +1,4 @@
-from .http import Request
+from .http import Route
 
 from pprint import pprint
 
@@ -22,8 +22,7 @@ class Pager:
 		self.offset = obj['offset']
 
 	async def get_next(self):
-		req = Request('GET')
-		req.url = self.next
+		req = Route('GET', self.next)
 		obj = await self.http.request(req)
 		self.set_next(obj)
 

@@ -8,7 +8,7 @@ with open('requirements.txt', 'r') as f:
 
 setuptools.setup(
     name="spoofy",
-    version="0.10.2",
+    version="0.11.0",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
     description="spoofy is an asynchronous, object-oriented python wrapper for the Spotify Web API.",
