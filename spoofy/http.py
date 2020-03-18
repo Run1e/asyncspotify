@@ -1,4 +1,4 @@
-import json as jsonserial
+from json import loads, JSONDecodeError
 import logging
 from asyncio import Lock, sleep
 
@@ -31,8 +31,10 @@ class HTTP:
 	def access_header(self):
 		return dict(Authorization='Bearer {}'.format(self.auth.access_token))
 
-	async def request(self, route, data=None, json=None, headers=None):
+	async def close_session(self):
+		await self.session.close()
 
+	async def request(self, route, data=None, json=None, headers=None):
 		if headers:
 			headers.update(self.access_header())
 		else:
@@ -58,9 +60,11 @@ class HTTP:
 					headers = resp.headers
 					text = await resp.text()
 
+					log.debug('[%s] %s', status_code, route)
+
 					try:
-						data = jsonserial.loads(text)
-					except jsonserial.JSONDecodeError:
+						data = loads(text)
+					except JSONDecodeError:
 						data = None
 
 					if 200 <= status_code < 300:
@@ -73,7 +77,7 @@ class HTTP:
 
 					if status_code == 429:
 						retry_after = int(headers.get('Retry-After', 1)) + 1
-						log.warning('Rate limited. Retrying in {0} seconds.'.format(retry_after))
+						log.warning('Rate limited. Retrying in %s seconds.', retry_after)
 						await sleep(retry_after)
 						continue
 
@@ -202,7 +206,7 @@ class HTTP:
 			collaborative=collaborative
 		)
 
-		r = Route('POST', 'users/{}/playlists'.format(user_id))
+		r = Route('POST', 'users/{0}/playlists'.format(user_id))
 
 		return await self.request(r, json=data)
 
@@ -272,6 +276,3 @@ class HTTP:
 	async def following(self, type, ids, **kwargs):
 		r = Route('PUT', 'me/following', type=type, ids=','.join(ids), **kwargs)
 		await self.request(r)
-
-	async def close_session(self):
-		await self.session.close()

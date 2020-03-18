@@ -34,6 +34,3 @@ class Object:
 		if self.name:
 			repr_str += ' name=\'{}\''.format(self.name)
 		return '<{}>'.format(repr_str)
-
-	def __str__(self):
-		return self.name or self.__repr__()

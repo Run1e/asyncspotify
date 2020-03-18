@@ -45,9 +45,9 @@ class Pager:
 
 
 class SearchPager(Pager):
-	def __init__(self, http, obj, type, max=None):
+	def __init__(self, http, obj, type, stop_after=None):
 		self.type = type
-		super().__init__(http, obj, max)
+		super().__init__(http, obj, stop_after)
 
 	def set_next(self, obj):
 		obj = obj[self.type]

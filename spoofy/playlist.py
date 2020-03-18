@@ -9,8 +9,6 @@ class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin)
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
-		self.tracks = []
-
 		self.snapshot_id = data.pop('snapshot_id')
 		self.collaborative = data.pop('collaborative')
 		self.public = data.pop('public')
