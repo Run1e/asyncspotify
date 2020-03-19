@@ -66,7 +66,6 @@ class HTTP:
 						data = loads(text)
 					except JSONDecodeError:
 						data = None
-
 					if 200 <= status_code < 300:
 						return data
 

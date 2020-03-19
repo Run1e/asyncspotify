@@ -5,6 +5,7 @@ import asyncio
 import json
 import logging
 
+from .scopes import Scopes
 from .exceptions import AuthenticationError
 
 log = logging.getLogger(__name__)
@@ -54,12 +55,14 @@ class OAuth:
 
 		return '{}?{}'.format(self.AUTHORIZE_URL, urlencode(params))
 
-	async def open_auth(self, auth_url):
+	@staticmethod
+	async def open_auth(auth_url):
 		import webbrowser
 		webbrowser.open(auth_url)
 
-	def get_code_from_redirect(self, url):
-		query = urlparse(url).query
+	@staticmethod
+	def get_code_from_redirect(url):
+		query = urlparse(url.strip()).query
 		return parse_qs(query)['code'][0]
 
 	async def get_tokens(self, code):
@@ -76,6 +79,8 @@ class OAuth:
 				raise AuthenticationError(resp)
 
 			data = await resp.json()
+
+			print(data)
 
 			self._access_token = data['access_token']
 			self._refresh_token = data['refresh_token']
@@ -94,8 +99,10 @@ class OAuth:
 		async with self.session.post(self.TOKEN_URL, data=params) as resp:
 			data = json.loads(await resp.text())
 
+			print(data)
+
 			if resp.status != 200:
-				raise RefreshTokenFailed(resp, ': '.join(data.values()))
+				raise AuthenticationError(resp, ': '.join(data.values()))
 
 			self._access_token = data['access_token']
 
@@ -108,7 +115,7 @@ def on_update_func(cache_file, access_token, refresh_token):
 		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
 
 
-async def easy_auth(client_id, client_secret, scope, cache_file):
+async def easy_auth(client_id, client_secret, cache_file='tokens.json', scope=Scopes.all()):
 	'''
 	Convenience function to make authorization using the Authorization Code Flow method as easy as possible.
 	
@@ -126,11 +133,19 @@ async def easy_auth(client_id, client_secret, scope, cache_file):
 
 	import json
 
+	if not isinstance(scope, Scopes):
+		if isinstance(scope, int):
+			scope = Scopes(scope)
+		elif scope is None:
+			scope = Scopes(0)
+		else:
+			raise TypeError('scope argument has to be of type spoofy.Scopes, integer or None.')
+
 	auth = OAuth(
 		client_id=client_id,
 		client_secret=client_secret,
 		redirect_uri='http://localhost/',
-		scope=scope,
+		scope=scope or Scopes.all(),
 	)
 
 	auth.on_update = (on_update_func, cache_file)

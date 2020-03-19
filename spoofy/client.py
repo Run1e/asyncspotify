@@ -31,26 +31,7 @@ class Client:
 		ClientSession used for HTTP requests.
 	'''
 
-	scopes = (
-		'user-read-recently-played',
-		'user-top-read',
-		'user-follow-read',
-		'user-follow-modify',
-		'user-modify-playback-state',
-		'user-read-playback-state',
-		'user-read-currently-playing',
-		'user-library-read',
-		'user-library-modify',
-		'user-read-private',
-		'user-read-birthdate',
-		'user-read-email',
-		'playlist-modify-public',
-		'playlist-read-collaborative',
-		'playlist-modify-private',
-		'playlist-read-private',
-		'streaming',
-		'app-remote-control'
-	)
+	http: HTTP
 
 	def __init__(self, auth):
 		'''
@@ -60,15 +41,15 @@ class Client:
 		'''
 
 		self.auth = auth
-		self.http = HTTP(auth)
+		self.http: HTTP = HTTP(auth)
 
 	async def __aenter__(self):
 		return self
 
 	async def __aexit__(self, exc_type, exc_val, exc_tb):
-		await self.close_session()
+		await self.close()
 
-	async def close_session(self):
+	async def close(self):
 		await self.http.close_session()
 
 	def _get_id(self, obj):
@@ -80,7 +61,7 @@ class Client:
 	async def refresh_token(self):
 		'''Refresh the access and refresh tokens.'''
 
-		log.info('Refreshing tokens')
+		log.debug('Refreshing tokens')
 		self.auth.refresh()
 
 	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:

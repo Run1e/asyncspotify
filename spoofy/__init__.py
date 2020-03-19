@@ -19,6 +19,7 @@ from .oauth import OAuth, easy_auth
 from .object import Object
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
+from .scopes import Scopes
 from .track import FullTrack, PlaylistTrack, SimpleTrack
 from .user import PrivateUser, PublicUser
 
