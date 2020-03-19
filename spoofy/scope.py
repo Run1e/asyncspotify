@@ -1,7 +1,7 @@
 from .flags import Flag, Flags
 
 
-class Scopes(Flags):
+class Scope(Flags):
 	ugc_image_upload = Flag(0)
 	user_read_playback_state = Flag(1)
 	user_modify_playback_state = Flag(2)
@@ -21,4 +21,7 @@ class Scopes(Flags):
 	user_follow_modify = Flag(16)
 
 	def tuples(self):
-		return tuple(name.replace('_', '-') for name, value in self)
+		return tuple(name.replace('_', '-') for name, value in self if value)
+
+	def scope(self):
+		return ' '.join(name.replace('_', '-') for name, value in self if value)

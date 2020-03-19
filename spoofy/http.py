@@ -1,6 +1,11 @@
+import asyncio
+from aiohttp import ClientSession
+
 from json import loads, JSONDecodeError
 import logging
 from asyncio import Lock, sleep
+
+from urllib.parse import urlencode
 
 from .exceptions import *
 
@@ -16,29 +21,36 @@ class Route:
 		self.params = params
 
 	def __repr__(self):
-		return '<Route method={0.method} url={0.url}>'.format(self)
+		return '<Route method={0.method} url={0.url} params={0.params}>'.format(self)
+
+	def __str__(self):
+		ret = self.url
+		if self.params:
+			ret += '?' + urlencode(self.params)
+		return ret
 
 
 class HTTP:
 	_attempts = 5
 	_base = 'https://api.spotify.com/v1'
 
-	def __init__(self, auth):
-		self.auth = auth
-		self.session = auth.session
+	def __init__(self, client, loop=None):
+		self.client = client
+		self.session = ClientSession(loop=loop or asyncio.get_event_loop())
 		self.lock = Lock()
-
-	def access_header(self):
-		return dict(Authorization='Bearer {}'.format(self.auth.access_token))
 
 	async def close_session(self):
 		await self.session.close()
 
-	async def request(self, route, data=None, json=None, headers=None):
-		if headers:
-			headers.update(self.access_header())
-		else:
-			headers = self.access_header()
+	async def request(self, route, data=None, json=None, headers=None, authorize=True):
+		if authorize:
+			auth_header = self.client.auth.header()
+			if auth_header is None:
+				raise AuthenticationError('Authorize before attempting an authorized request.')
+			if headers:
+				headers.update(auth_header)
+			else:
+				headers = auth_header
 
 		kw = dict(method=route.method, url=route.url, headers=headers)
 
@@ -55,23 +67,24 @@ class HTTP:
 		async with self.lock:
 			for attempt in range(self._attempts):
 
-				async with self.session.request(**kw) as resp:
-					status_code = resp.status
-					headers = resp.headers
-					text = await resp.text()
+				async with self.session.request(**kw) as r:
+					status_code = r.status
+					headers = r.headers
+					text = await r.text()
 
-					log.debug('[%s] %s', status_code, route)
+					log.debug('[%s] %s', status_code, repr(route))
 
 					try:
 						data = loads(text)
 					except JSONDecodeError:
 						data = None
+
 					if 200 <= status_code < 300:
 						return data
 
 					try:
 						error = data['error']['message']
-					except KeyError:
+					except (TypeError, KeyError):
 						error = None
 
 					if status_code == 429:
@@ -81,29 +94,24 @@ class HTTP:
 						continue
 
 					elif status_code == 400:
-						raise BadRequest(resp, error)
+						raise BadRequest(r, error)
 
 					elif status_code == 401:
-						if error == 'The access token expired':
-							await self.auth.refresh()
-							kw['headers'].update(self.access_header())
-							continue
-						else:
-							raise Unauthorized(resp, error)
+						pass # TODO: refresh tokens
 
 					elif status_code == 403:
-						raise Forbidden(resp, error)
+						raise Forbidden(r, error)
 
 					elif status_code == 404:
-						raise NotFound(resp, error)
+						raise NotFound(r, error)
 
 					elif status_code == 405:
-						raise NotAllowed(resp, error)
+						raise NotAllowed(r, error)
 
 					elif status_code >= 500:
 						continue
 
-		raise HTTPException(resp, 'Request failed 5 times.')
+		raise HTTPException(r, 'Request failed 5 times.')
 
 	async def get_player(self, **kwargs):
 		r = Route('GET', 'me/player', **kwargs)

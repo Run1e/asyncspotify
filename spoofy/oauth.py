@@ -1,175 +1,207 @@
-from urllib.parse import parse_qs, urlencode, urlparse
-
-import aiohttp
 import asyncio
 import json
 import logging
+from datetime import datetime, timedelta
+from urllib.parse import parse_qs, urlparse
 
-from .scopes import Scopes
-from .exceptions import AuthenticationError
+from .http import Route
+from .scope import Scope
 
 log = logging.getLogger(__name__)
 
 
-class OAuth:
-	'''Implements the Authorization Code Flow OAuth method.'''
+class Response:
+	access_token: str
+	token_type: str
+	expires_in: int
+	created_at: datetime
+	expires_at: datetime
 
+	def is_expired(self):
+		return datetime.utcnow() > self.expires_at
+
+	def seconds_until_expire(self):
+		return (self.expires_at - datetime.utcnow()).total_seconds()
+
+
+class Authorizer:
 	AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
 	TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
-	_access_token = None
-	_refresh_token = None
+	_client = None
+	response: Response = None
 
-	def __init__(self, client_id, client_secret, redirect_uri, scope=None, loop=None, on_update=None):
-
-		self.client_id = client_id
-		self.client_secret = client_secret
-		self.redirect_uri = redirect_uri
+	def __init__(self, scope):
+		if not isinstance(scope, Scope):
+			raise TypeError('Scopes has to be of type spoofy.Scopes')
 		self.scope = scope
-		self.response_type = 'code'
-		self.on_update = on_update
-
-		self.session = aiohttp.ClientSession(loop=loop or asyncio.get_event_loop())
 
 	@property
-	def access_token(self):
-		if self._access_token is None:
-			raise AuthenticationError('Access token non-existent, authenticate first!')
-		return self._access_token
+	def client(self):
+		if self._client is None:
+			raise ValueError('Authorizer has not been given a client yet.')
+		return self._client
 
-	@property
-	def refresh_token(self):
-		if self._refresh_token is None:
-			raise AuthenticationError('Refresh token non-existent, authenticate first!')
-		return self._refresh_token
+	def close(self):
+		pass
 
-	def create_auth_url(self):
+	def header(self):
+		if self.response is None:
+			return None
+		return dict(Authorization='%s %s' % (self.response.token_type, self.response.access_token))
+
+	def set_client(self, client):
+		self._client = client
+
+
+class AuthorizationCodeFlowResponse(Response):
+	def __init__(self, data):
+		self.access_token = data.get('access_token')
+		self.token_type = data.get('token_type')
+		self.scope = data.get('scope')
+		self.expires_in = data.get('expires_in')
+		self.refresh_token = data.get('refresh_token')
+
+		self.created_at = datetime.utcnow()
+		self.expires_at = self.created_at + timedelta(seconds=self.expires_in)
+
+
+class EasyAuthResponse(AuthorizationCodeFlowResponse):
+	@classmethod
+	def from_stored(cls, data):
+		self = cls(data)
+
+		self.created_at = datetime.fromisoformat(data.pop('created_at'))
+		self.expires_at = datetime.fromisoformat(data.pop('expires_at'))
+
+		return self
+
+
+class AuthorizationCodeFlow(Authorizer):
+	PARSE_ERROR = ValueError('Unable to get code from that redirect url.')
+
+	response: AuthorizationCodeFlowResponse
+
+	def __init__(self, scope, redirect_uri, callback, response_class=AuthorizationCodeFlowResponse):
+		super().__init__(scope)
+		self.redirect_uri = redirect_uri
+		self.response_class = response_class
+		self.refresh_task = None
+		self.callback = callback
+
+	async def refresh(self):
+		if self.response is None:
+			raise TypeError("Can't refresh access token without refresh token.")
+
+		data = dict(
+			grant_type='refresh_token',
+			refresh_token=self.response.refresh_token,
+			client_id=self.client.id,
+			client_secret=self.client.secret
+		)
+
+		r = Route('POST', self.TOKEN_URL)
+		data = await self.client.http.request(r, data=data, authorize=False)
+
+		self.callback(data)
+
+	def create_authorize_route(self):
 		params = dict(
-			client_id=self.client_id,
+			client_id=self.client.id,
 			redirect_uri=self.redirect_uri,
 			response_type='code'
 		)
 
 		if self.scope is not None:
-			params['scope'] = ' '.join(self.scope)
+			params['scope'] = self.scope.scope()
 
-		return '{}?{}'.format(self.AUTHORIZE_URL, urlencode(params))
+		return Route('GET', self.AUTHORIZE_URL, **params)
 
-	@staticmethod
-	async def open_auth(auth_url):
-		import webbrowser
-		webbrowser.open(auth_url)
-
-	@staticmethod
-	def get_code_from_redirect(url):
-		query = urlparse(url.strip()).query
-		return parse_qs(query)['code'][0]
-
-	async def get_tokens(self, code):
-		params = dict(
-			client_id=self.client_id,
-			client_secret=self.client_secret,
+	def create_token_route(self, code):
+		data = dict(
+			client_id=self.client.id,
+			client_secret=self.client.secret,
 			grant_type='authorization_code',
 			code=code,
 			redirect_uri=self.redirect_uri
 		)
 
-		async with self.session.post(self.TOKEN_URL, data=params) as resp:
-			if resp.status != 200:
-				raise AuthenticationError(resp)
+		return Route('POST', self.TOKEN_URL), data
 
-			data = await resp.json()
+	def get_code_from_redirect(self, url):
+		parsed = urlparse(url.strip())
+		query = parsed.query
 
-			print(data)
+		if not query:
+			raise self.PARSE_ERROR
 
-			self._access_token = data['access_token']
-			self._refresh_token = data['refresh_token']
+		qs = parse_qs(query)
+		if 'code' not in qs:
+			raise self.PARSE_ERROR
 
-			if self.on_update:
-				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
-
-	async def refresh(self):
-		params = dict(
-			grant_type='refresh_token',
-			refresh_token=self._refresh_token,
-			client_id=self.client_id,
-			client_secret=self.client_secret
-		)
-
-		async with self.session.post(self.TOKEN_URL, data=params) as resp:
-			data = json.loads(await resp.text())
-
-			print(data)
-
-			if resp.status != 200:
-				raise AuthenticationError(resp, ': '.join(data.values()))
-
-			self._access_token = data['access_token']
-
-			if callable(self.on_update[0]):
-				self.on_update[0](self.on_update[1], self._access_token, self._refresh_token)
+		return qs['code'][0]
 
 
-def on_update_func(cache_file, access_token, refresh_token):
-	with open(cache_file, 'w') as f:
-		f.write(json.dumps({'access_token': access_token, 'refresh_token': refresh_token}))
+class EasyAuth(AuthorizationCodeFlow):
+	def __init__(self, scope=Scope.all(), store='tokens.json'):
+		super().__init__(scope, 'http://localhost/', self.on_update, EasyAuthResponse)
+		self.store = store
 
+	async def init(self):
+		fmt = (
+			'Hi! This is the initial EasyAuth setup.\n\n'
+			'Please open this URL:\n{0}\n\n'
+			'and then input the URL you were redirected to after accepting here:\n'
+		).format(str(self.create_authorize_route()))
 
-async def easy_auth(client_id, client_secret, cache_file='tokens.json', scope=Scopes.all()):
-	'''
-	Convenience function to make authorization using the Authorization Code Flow method as easy as possible.
-	
-	.. note::
-		The client id and client secret are just that, *secret*.
-		The tokens stored in `cache_file` are also extremely sensitive, as they single-handedly gives access to your
-		account until the token runs out.
-	
-	:param client_id: Client ID of your application.
-	:param client_secret: Client Secret of your application.
-	:param scope: List of scopes (listed `here. <https://developer.spotify.com/documentation/general/guides/scopes/>`_)
-	:param cache_file: JSON file to store the access and refresh tokens in.
-	:return:
-	'''
+		code_url = input(fmt)
 
-	import json
+		code = self.get_code_from_redirect(code_url)
 
-	if not isinstance(scope, Scopes):
-		if isinstance(scope, int):
-			scope = Scopes(scope)
-		elif scope is None:
-			scope = Scopes(0)
-		else:
-			raise TypeError('scope argument has to be of type spoofy.Scopes, integer or None.')
+		r, d = self.create_token_route(code)
 
-	auth = OAuth(
-		client_id=client_id,
-		client_secret=client_secret,
-		redirect_uri='http://localhost/',
-		scope=scope or Scopes.all(),
-	)
+		return await self.client.http.request(r, data=d, authorize=False)
 
-	auth.on_update = (on_update_func, cache_file)
+	def close(self):
+		if self.refresh_task is not None:
+			self.refresh_task.cancel()
 
-	try:
-		with open(cache_file, 'r') as f:
-			data = json.loads(f.read())
-			if 'access_token' in data and 'refresh_token' in data:
-				auth._access_token = data['access_token']
-				auth._refresh_token = data['refresh_token']
-				return auth
-	except FileNotFoundError:
-		pass
+	async def authorize(self):
+		try:
+			with open(self.store, 'r') as f:
+				data = json.loads(f.read())
+				self.response = EasyAuthResponse.from_stored(data)
+				self.refresh_in(self.response.seconds_until_expire())
+		except (FileNotFoundError, json.JSONDecodeError):
+			data = await self.init()
+			self.on_update(data)
 
-	fmt = (
-		'Hi! This is the initial easy_auth setup.\n\n'
-		'Please open this URL: {}\n'
-		'- and then input the URL you were redirected to after accepting here:\n'
-	)
+	def refresh_in(self, seconds):
+		if self.refresh_task is not None:
+			self.refresh_task.cancel()
 
-	code_url = input(fmt.format(auth.create_auth_url()))
+		self.refresh_task = asyncio.create_task(self._refresh_in_meta(seconds))
 
-	code = auth.get_code_from_redirect(code_url)
+	async def _refresh_in_meta(self, seconds):
+		if seconds > 0:
+			log.debug('Refreshing access token in %s seconds', seconds)
+			await asyncio.sleep(seconds)
+			log.debug('%s seconds passed, refreshing access token now', seconds)
 
-	await auth.get_tokens(code)
+		await self.refresh()
 
-	return auth
+	def on_update(self, data):
+		if isinstance(self.response, Response):
+			data['refresh_token'] = self.response.refresh_token
+
+		resp = EasyAuthResponse(data)
+
+		data['created_at'] = resp.created_at.isoformat()
+		data['expires_at'] = resp.expires_at.isoformat()
+
+		with open(self.store, 'w') as f:
+			f.write(json.dumps(data, indent=2))
+
+		self.response = resp
+
+		self.refresh_in(resp.seconds_until_expire())

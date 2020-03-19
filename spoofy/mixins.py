@@ -1,5 +1,9 @@
+import logging
+
 from .image import Image
 from .object import Object
+
+log = logging.getLogger(__name__)
 
 
 class ArtistMixin:
@@ -47,10 +51,13 @@ class TrackMixin:
 	async def _fill_tracks(self, object_type, pager):
 		self.tracks = []
 
-		async for object in pager:
+		async for obj in pager:
 			# TODO: handle this case nicer?
-			if object['track'] is not None:
-				self.tracks.append(object_type(self._client, object))
+			if obj.get('track', True) is None:
+				log.warning('Object has no track associated with it: %s', obj)
+				continue
+
+			self.tracks.append(object_type(self._client, obj))
 
 
 class UserMixin:

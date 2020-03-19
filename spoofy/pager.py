@@ -12,12 +12,12 @@ class Pager:
 		self.stop_after = stop_after
 		self.set_next(pager_object)
 
-	def set_next(self, pager_object):
-		self.total = pager_object['total']
-		self.next = pager_object['next']
-		self.items = pager_object['items']
-		self.limit = pager_object['limit']
-		self.offset = pager_object['offset']
+	def set_next(self, obj):
+		self.total = obj['total']
+		self.next = obj['next']
+		self.items = obj['items']
+		self.limit = obj['limit']
+		self.offset = obj['offset']
 
 	async def get_next(self):
 		r = Route('GET', self.next)

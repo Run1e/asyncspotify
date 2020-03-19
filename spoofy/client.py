@@ -9,6 +9,7 @@ from .device import Device
 from .exceptions import NotFound, SpoofyException
 from .http import HTTP
 from .object import Object
+from .oauth import Authorizer
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -32,16 +33,22 @@ class Client:
 	'''
 
 	http: HTTP
+	auth: Authorizer
 
-	def __init__(self, auth):
+	def __init__(self, client_id, client_secret, auth):
 		'''
 		Creates a Spotify Client instance.
 
 		:param auth: Instance of :class:`OAuth`
 		'''
 
+		self.id = client_id
+		self.secret = client_secret
 		self.auth = auth
-		self.http: HTTP = HTTP(auth)
+
+		self.auth.set_client(self)
+
+		self.http: HTTP = HTTP(self)
 
 	async def __aenter__(self):
 		return self
@@ -62,7 +69,7 @@ class Client:
 		'''Refresh the access and refresh tokens.'''
 
 		log.debug('Refreshing tokens')
-		self.auth.refresh()
+		await self.auth.refresh()
 
 	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:
 		'''
