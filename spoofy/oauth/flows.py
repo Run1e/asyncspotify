@@ -58,12 +58,8 @@ class AuthorizationCodeFlow(Authorizer, RefreshableMixin):
 			client_secret=self.client.secret
 		)
 
-		print(data)
-
 		r = Route('POST', TOKEN_URL)
 		data = await self.client.http.request(r, data=data, authorize=False)
-
-		data['expires_in'] = 4
 
 		ins = self.response_class(data)
 		ins.refresh_token = self.response.refresh_token
@@ -174,7 +170,5 @@ class ClientCredentialsFlow(Authorizer, RefreshableMixin):
 
 		r = Route('POST', TOKEN_URL)
 		data = await self.client.http.request(r, data=d, authorize=False)
-
-		data['expires_in'] = 4
 
 		return AuthenticationResponse(data)
