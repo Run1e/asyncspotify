@@ -20,8 +20,5 @@ class Scope(Flags):
 	user_follow_read = Flag(15)
 	user_follow_modify = Flag(16)
 
-	def tuples(self):
-		return tuple(name.replace('_', '-') for name, value in self if value)
-
-	def scope(self):
+	def string(self):
 		return ' '.join(name.replace('_', '-') for name, value in self if value)

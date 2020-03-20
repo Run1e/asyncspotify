@@ -15,7 +15,7 @@ from .client import Client
 from .device import Device
 from .exceptions import *
 from .image import Image
-from .oauth import EasyAuth
+from spoofy.oauth.flows import AuthorizationCodeFlow, EasyCodeFlow, ClientCredentialsFlow
 from .object import Object
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -24,4 +24,4 @@ from .track import FullTrack, PlaylistTrack, SimpleTrack
 from .user import PrivateUser, PublicUser
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.WARNING)

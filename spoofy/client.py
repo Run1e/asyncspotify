@@ -9,7 +9,7 @@ from .device import Device
 from .exceptions import NotFound, SpoofyException
 from .http import HTTP
 from .object import Object
-from .oauth import Authorizer
+from spoofy.oauth.flows import Authorizer
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -35,7 +35,7 @@ class Client:
 	http: HTTP
 	auth: Authorizer
 
-	def __init__(self, client_id, client_secret, auth):
+	def __init__(self, auth, client_id=None, client_secret=None):
 		'''
 		Creates a Spotify Client instance.
 

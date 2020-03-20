@@ -15,13 +15,13 @@ log = logging.getLogger(__name__)
 class Route:
 	BASE = 'https://api.spotify.com/v1'
 
-	def __init__(self, method, url, **params):
-		self.method = method
+	def __init__(self, method: str, url: str, **params):
+		self.method = method.upper()
 		self.url = url if url.startswith('http') else '{0}/{1}'.format(self.BASE, url)
 		self.params = params
 
 	def __repr__(self):
-		return '<Route method={0.method} url={0.url} params={0.params}>'.format(self)
+		return '<Route {0.method} url={0.url} params={0.params}>'.format(self)
 
 	def __str__(self):
 		ret = self.url
@@ -32,7 +32,6 @@ class Route:
 
 class HTTP:
 	_attempts = 5
-	_base = 'https://api.spotify.com/v1'
 
 	def __init__(self, client, loop=None):
 		self.client = client
@@ -43,10 +42,12 @@ class HTTP:
 		await self.session.close()
 
 	async def request(self, route, data=None, json=None, headers=None, authorize=True):
+
 		if authorize:
 			auth_header = self.client.auth.header()
 			if auth_header is None:
 				raise AuthenticationError('Authorize before attempting an authorized request.')
+
 			if headers:
 				headers.update(auth_header)
 			else:
@@ -97,7 +98,10 @@ class HTTP:
 						raise BadRequest(r, error)
 
 					elif status_code == 401:
-						pass # TODO: refresh tokens
+						if not authorize:
+							raise Unauthorized(r, error)
+
+						# re-auth
 
 					elif status_code == 403:
 						raise Forbidden(r, error)
