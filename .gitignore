@@ -9,4 +9,4 @@ venv
 asd.py
 config.py
 tokens.json
-spoofy.egg-info
+asyncspotify.egg-info

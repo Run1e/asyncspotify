@@ -170,7 +170,7 @@ You can create a scope with specific permissions by passing kwargs in, like:
 Exceptions
 ==========
 
-.. autoclass:: SpoofyException
+.. autoclass:: SpotifyException
 
 .. autoclass:: HTTPException
    :show-inheritance:
