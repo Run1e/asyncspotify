@@ -1,6 +1,6 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 with open('requirements.txt', 'r') as f:
@@ -11,7 +11,7 @@ setuptools.setup(
     version="0.11.0",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
-    description="spoofy is an asynchronous, object-oriented python wrapper for the Spotify Web API.",
+    description="Spotify Web API implementation that is fully asynchronous and object-oriented.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=install_requires,
@@ -22,4 +22,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    python_requires=">=3.6"
 )

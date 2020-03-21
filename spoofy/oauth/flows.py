@@ -2,10 +2,10 @@ import json
 import logging
 from urllib.parse import parse_qs, urlparse
 
-from ..http import Route
-from ..scope import Scope
 from .mixins import RefreshableMixin
 from .response import AuthenticationResponse, AuthorizationCodeFlowResponse, EasyCodeFlowResponse
+from ..http import Route
+from ..scope import Scope
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +14,8 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
 
 class Authenticator:
+	'''Base authentication class. All authenticators should inherit from this, custom or not.'''
+
 	_client = None
 	_data: AuthenticationResponse = None
 
@@ -42,6 +44,8 @@ class Authenticator:
 
 
 class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
+	'''Implements the Authorization Code flow. Subclass this or use EasyCodeFlow if you want persistent token storage.'''
+
 	_data: AuthorizationCodeFlowResponse
 
 	PARSE_ERROR = ValueError('Unable to get code from that redirect url')
@@ -75,6 +79,8 @@ class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
 		return ins
 
 	def create_authorize_route(self):
+		'''Craft the :class:`Route` for the user to use for authorizing the client.'''
+
 		params = dict(
 			client_id=self.client_id,
 			redirect_uri=self.redirect_uri,
@@ -86,18 +92,9 @@ class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
 
 		return Route('GET', AUTHORIZE_URL, **params)
 
-	def create_token_route(self, code):
-		data = dict(
-			client_id=self.client_id,
-			client_secret=self.client_secret,
-			grant_type='authorization_code',
-			code=code,
-			redirect_uri=self.redirect_uri
-		)
-
-		return Route('POST', TOKEN_URL), data
-
 	def get_code_from_redirect(self, url):
+		'''Extract the authorization code from the redirect uri.'''
+
 		parsed = urlparse(url.strip())
 		query = parsed.query
 
@@ -112,6 +109,19 @@ class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
 
 
 class EasyCodeFlow(AuthorizationCodeFlow):
+	'''
+	Convenience class that implements the Authorization Code flow in addition to simple token storage.
+
+	client_id: str
+		Your application client id.
+	client_secret: str
+		Your application client secret.
+	scope: :class:`Scope`
+		The scope you're requesting.
+	store: str
+		Where you want the tokens and metadata to be stored (in json format!)
+	'''
+
 	_data: EasyCodeFlowResponse
 
 	def __init__(self, client_id, client_secret, scope=Scope.none(), store='tokens.json'):
@@ -179,7 +189,15 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 
 
 class ClientCredentialsFlow(Authenticator, RefreshableMixin):
+	'''
+	Implements the Client Credentials flow.
+
+	You can only access public resources using this authenticator.
+	'''
+
 	async def authorize(self):
+		'''Authorize using this authenticator.'''
+
 		await self.refresh(start_task=True)
 
 	async def token(self):

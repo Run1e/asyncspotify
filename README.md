@@ -5,7 +5,7 @@
 spoofy is an asynchronous, object-oriented python wrapper for the Spotify Web API.
 
 ### Installation
-Simply install it fro PyPi using pip!
+Simply install it from PyPi using pip!
 ```
 pip install spoofy
 ```
@@ -18,21 +18,23 @@ The official documentation can be found on readthedocs: https://spoofy.readthedo
 
 The library provides easy to use authentication functions and intuitive method and hierarchies.
 
+To get going quickly, read the [quickstart](https://spoofy.readthedocs.io/en/latest/quickstart.html).
+
 For complete examples, please check the documentation. Here's some snippets:
 
-Creating an OAuth object and a Spotify Client:
+Authenticating using the Client Credentials flow, and getting a playlist:
 ```py
 import spoofy
 
-# create an authentication object, storing tokens in tokens.json
-auth = await spoofy.easy_auth(
-    client_id=client_id,
-    client_secret=client_secret,
-    scope=('playlist-modify-private', 'playlist-read-private'),
-    cache_file='tokens.json'
+auth = spoofy.ClientCredentialsFlow(
+    client_id='your client id',
+    client_secret='your client secret',
 )
 
-sp = spoofy.Client(auth) # initialize a spotify client
+async with spoofy.Client(auth) as sp:
+    playlist = await sp.get_playlist('1MG01HhbCvVhH9NmXhd9GC')
+    for track in playlist.tracks:
+        print(track.name)
 ```
 
 Searching for and getting tracks:
@@ -65,3 +67,7 @@ my_playlist = await me.create_playlist(name='My playlist!')
 # add tracks from previews playlist to the new playlist
 await my_playlist.add_tracks(*playlist.tracks)
 ```
+
+### Reporting bugs
+
+Please report issues [here on GitHub](https://github.com/Run1e/spoofy/issues).

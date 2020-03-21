@@ -107,7 +107,7 @@ class PlaylistTrack(FullTrack):
 	'''
 	Represents a Track object originating from a playlist.
 	
-	This type has some additional attributes not existent in :class:`Track`, :class:`SimpleTrack` or :class:`FullTrack`.
+	This type has some additional attributes not existent in :class:`SimpleTrack` or :class:`FullTrack`.
 	
 	added_at: `datetime <https://docs.python.org/3/library/datetime.html#module-datetime>`_
 		Indicates when the track was added to the playlist.

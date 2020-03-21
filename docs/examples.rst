@@ -7,22 +7,22 @@ Getting Spotify Objects
 =======================
 
 .. literalinclude:: ../examples/getting_objects.py
-  :language: python
+   :language: python
 
 Getting playlists and adding tracks
 ===================================
 
 .. literalinclude:: ../examples/playlists.py
-  :language: python
+   :language: python
 
 Searching
 =========
 
 .. literalinclude:: ../examples/searching.py
-  :language: python
+   :language: python
 
 Getting users/yourself
 ======================
 
 .. literalinclude:: ../examples/users.py
-  :language: python
+   :language: python

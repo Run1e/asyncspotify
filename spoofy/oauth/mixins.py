@@ -10,6 +10,8 @@ class RefreshableMixin:
 	_task: asyncio.Task = None
 
 	async def refresh(self, start_task=True):
+		'''Refresh this authenticator.'''
+
 		meth = getattr(self, 'token', None)
 
 		if not callable(meth):
