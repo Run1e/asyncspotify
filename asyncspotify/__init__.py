@@ -2,7 +2,7 @@
 A Python library for interacting asynchronously with the Spotify API
 """
 
-__title__ = 'spoofy'
+__title__ = 'asyncspotify'
 __author__ = 'RUNIE'
 __version__ = '0.11.0'
 
@@ -15,7 +15,7 @@ from .client import Client
 from .device import Device
 from .exceptions import *
 from .image import Image
-from spoofy.oauth.flows import AuthorizationCodeFlow, EasyCodeFlow, ClientCredentialsFlow
+from .oauth.flows import AuthorizationCodeFlow, EasyCodeFlow, ClientCredentialsFlow
 from .object import Object
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist

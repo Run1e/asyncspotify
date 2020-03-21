@@ -7,7 +7,7 @@ with open('requirements.txt', 'r') as f:
     install_requires = f.read().splitlines()
 
 setuptools.setup(
-    name="spoofy",
+    name="asyncspotify",
     version="0.11.0",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
@@ -15,12 +15,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=install_requires,
-    url="https://github.com/Run1e/spoofy",
+    url="https://github.com/Run1e/asyncspotify",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.6"
+    python_requires=">=3.5"
 )

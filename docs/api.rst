@@ -1,4 +1,4 @@
-.. currentmodule:: spoofy
+.. currentmodule:: asyncspotify
 
 API Reference
 *************
@@ -13,14 +13,14 @@ You can start a client in a context using the ``async with`` statement, see belo
 
 .. code-block:: py
 
-	async with spoofy.Client(auth) as sp:
+	async with asyncspotify.Client(auth) as sp:
 		# your code here
 
 Otherwise, you would start a client like this:
 
 .. code-block:: py
 
-	sp = spoofy.Client(auth)
+	sp = asyncspotify.Client(auth)
 	await sp.authenticate()
 
 	# your code here..
@@ -193,7 +193,7 @@ Exceptions
 Utilities
 =========
 
-.. py:currentmodule:: spoofy.utils
+.. py:currentmodule:: asyncspotify.utils
 
 .. autofunction:: get
 

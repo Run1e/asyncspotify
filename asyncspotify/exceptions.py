@@ -1,17 +1,17 @@
-class SpoofyException(Exception):
+class SpotifyException(Exception):
 	'''
 	Base exception of all exceptions thrown by this library.
 	'''
 	pass
 
 
-class AuthenticationError(SpoofyException):
+class AuthenticationError(SpotifyException):
 	'''
 	General exception when authenticating failed.
 	'''
 
 
-class HTTPException(SpoofyException):
+class HTTPException(SpotifyException):
 	'''
 	Base exception of all HTTP related exceptions.
 

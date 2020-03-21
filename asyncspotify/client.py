@@ -6,7 +6,7 @@ from .album import FullAlbum, SimpleAlbum
 from .artist import FullArtist, SimpleArtist
 from .audiofeatures import AudioFeatures
 from .device import Device
-from .exceptions import NotFound, SpoofyException
+from .exceptions import NotFound, SpotifyException
 from .http import HTTP
 from .object import Object
 from .oauth.flows import Authenticator
@@ -202,7 +202,7 @@ class Client:
 		'''
 
 		if q is None:
-			raise SpoofyException('Search query required.')
+			raise SpotifyException('Search query required.')
 
 		finished_types = []
 		for tpe in types:
@@ -211,7 +211,7 @@ class Client:
 			elif isinstance(tpe, str):
 				finished_types.append(tpe)
 			else:
-				raise SpoofyException('Unknown type.')
+				raise SpotifyException('Unknown type.')
 
 		data = await self.http.search(finished_types, q, limit=limit if limit < 50 else 50, **kwargs)
 
@@ -343,7 +343,7 @@ class Client:
 		'''
 
 		if limit > 50:
-			raise SpoofyException('Limit must be less or equal to 50.')
+			raise SpotifyException('Limit must be less or equal to 50.')
 
 		data = await self.http.get_me_top_tracks(limit=limit, offset=offset, time_range=time_range)
 
@@ -370,7 +370,7 @@ class Client:
 		'''
 
 		if limit > 50:
-			raise SpoofyException('Limit must be less or equal to 50.')
+			raise SpotifyException('Limit must be less or equal to 50.')
 
 		data = await self.http.get_me_top_artists(limit=limit, offset=offset, time_range=time_range)
 
@@ -750,7 +750,7 @@ class Client:
 		artists = []
 
 		if type != 'artist':
-			raise SpoofyException('Currently only artist is supported.')
+			raise SpotifyException('Currently only artist is supported.')
 
 		async for artist_obj in CursorBasedPaging(self.http, data, 'artists', limit):
 			artists.append(SimpleArtist(self, artist_obj))

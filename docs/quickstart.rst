@@ -1,4 +1,4 @@
-.. py:currentmodule:: spoofy
+.. py:currentmodule:: asyncspotify
 
 Quickstart
 **********
@@ -12,21 +12,21 @@ The recommended way of installing this library is from PyPi.
 
 .. code-block:: py
 
-    pip install spoofy
+    pip install asyncspotify
 
 If you're installing for a specific python version, do:
 
 .. code-block:: py
 
-    python3.7 -m pip install spoofy
+    python3.7 -m pip install asyncspotify
 
 Upon installation, the following code should show the version number of the lib:
 
 .. code-block:: py
 
-    import spoofy
+    import asyncspotify
 
-    print(spoofy.__version__)
+    print(asyncspotify.__version__)
 
 Getting started
 ===============

@@ -1,12 +1,12 @@
-.. spoofy documentation master file, created by
+.. asyncspotify documentation master file, created by
    sphinx-quickstart on Fri Nov 30 10:49:44 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to spoofy's documentation!
+Welcome to asyncspotify's documentation!
 ==================================
 
-spoofy is an asynchronous, object-oriented wrapper for the Spotify Web API.
+asyncspotify is an asynchronous, object-oriented wrapper for the Spotify Web API.
 
 Primary goals of this library:
  - easy and intuitive asynchronous interface

@@ -1,16 +1,16 @@
 import asyncio
-import spoofy
+import asyncspotify
 
 
 async def main():
 	# authenticate using the Client Credentials flow
-	auth = spoofy.ClientCredentialsFlow(
+	auth = asyncspotify.ClientCredentialsFlow(
 		client_id='your client id',
 		client_secret='your client secret',
 	)
 	
 	# create and authorize your spotify client
-	sp = spoofy.Client(auth)
+	sp = asyncspotify.Client(auth)
 	await sp.authorize()
 
 	# done!
