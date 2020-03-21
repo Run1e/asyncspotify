@@ -4,7 +4,8 @@ A Python library for interacting asynchronously with the Spotify API
 
 __title__ = 'asyncspotify'
 __author__ = 'RUNIE'
-__version__ = '0.11.0'
+__version__ = '0.11.1'
+__license__ = 'MIT'
 
 import logging
 
@@ -15,7 +16,7 @@ from .client import Client
 from .device import Device
 from .exceptions import *
 from .image import Image
-from .oauth.flows import AuthorizationCodeFlow, EasyCodeFlow, ClientCredentialsFlow
+from .oauth import AuthorizationCodeFlow, ClientCredentialsFlow, EasyCodeFlow
 from .object import Object
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
