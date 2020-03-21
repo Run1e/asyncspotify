@@ -9,7 +9,7 @@ from .device import Device
 from .exceptions import NotFound, SpoofyException
 from .http import HTTP
 from .object import Object
-from spoofy.oauth.flows import Authorizer
+from .oauth.flows import Authorizer
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -26,35 +26,35 @@ class Client:
 
 	This is the class you should be interfacing with when fetching Spotify objects.
 
-	auth: :class:`OAuth`
+	auth: :class:`Authorizer`
 		OAuth instance used for authenticating with the API.
-	session: `aiohttp.ClientSession <http://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession>`_
-		ClientSession used for HTTP requests.
 	'''
 
-	http: HTTP
 	auth: Authorizer
+	http: HTTP
 
-	def __init__(self, auth, client_id=None, client_secret=None):
+	def __init__(self, auth):
 		'''
 		Creates a Spotify Client instance.
 
 		:param auth: Instance of :class:`OAuth`
 		'''
 
-		self.id = client_id
-		self.secret = client_secret
-		self.auth = auth
-
-		self.auth.set_client(self)
-
-		self.http: HTTP = HTTP(self)
+		self.auth = auth(self)
+		self.http = HTTP(self)
 
 	async def __aenter__(self):
+		await self.auth.authorize()
 		return self
 
 	async def __aexit__(self, exc_type, exc_val, exc_tb):
 		await self.close()
+
+	async def authorize(self):
+		await self.auth.authorize()
+
+	async def refresh(self):
+		await self.auth.refresh()
 
 	async def close(self):
 		await self.http.close_session()

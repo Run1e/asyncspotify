@@ -1,12 +1,11 @@
-import asyncio
 import json
 import logging
 from urllib.parse import parse_qs, urlparse
 
-from spoofy.http import Route
-from spoofy.scope import Scope
-from .response import AuthorizationCodeFlowResponse, AuthenticationResponse, EasyCodeFlowResponse
+from ..http import Route
+from ..scope import Scope
 from .mixins import RefreshableMixin
+from .response import AuthenticationResponse, AuthorizationCodeFlowResponse, EasyCodeFlowResponse
 
 log = logging.getLogger(__name__)
 
@@ -16,58 +15,68 @@ TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
 class Authorizer:
 	_client = None
-	response: AuthenticationResponse = None
+	_data: AuthenticationResponse = None
+
+	def __init__(self, client_id, client_secret=None):
+		self.client_id = client_id
+		self.client_secret = client_secret
+
+	def __call__(self, client):
+		self._client = client
+		return self
+
+	@property
+	def header(self):
+		if self._data is None:
+			raise ValueError('Not authorized yet, no Authorization header to craft')
+		return dict(Authorization='%s %s' % (self._data.token_type, self._data.access_token))
 
 	@property
 	def client(self):
 		if self._client is None:
-			raise ValueError('Authorizer has not been given a client yet.')
+			raise ValueError('Client not set for authorizer yet.')
 		return self._client
 
-	def close(self):
-		pass
-
-	def header(self):
-		if self.response is None:
-			return None
-		return dict(Authorization='%s %s' % (self.response.token_type, self.response.access_token))
-
-	def set_client(self, client):
-		self._client = client
+	async def authorize(self):
+		raise NotImplementedError
 
 
 class AuthorizationCodeFlow(Authorizer, RefreshableMixin):
-	PARSE_ERROR = ValueError('Unable to get code from that redirect url.')
+	_data: AuthorizationCodeFlowResponse
 
-	def __init__(self, scope, redirect_uri, response_class=AuthorizationCodeFlowResponse):
+	PARSE_ERROR = ValueError('Unable to get code from that redirect url')
+
+	def __init__(self, client_id, client_secret, scope, redirect_uri, response_class=AuthorizationCodeFlowResponse):
 		assert isinstance(scope, Scope)
+
+		super().__init__(client_id, client_secret)
 
 		self.scope = scope
 		self.redirect_uri = redirect_uri
 		self.response_class = response_class
 		self.refresh_task = None
 
-	async def refresh(self):
-		if self.response is None:
-			raise TypeError("Can't refresh access token without refresh token.")
+	async def token(self):
+		if self._data is None:
+			raise ValueError('Can\'t refresh token without previous refresh token')
 
 		data = dict(
 			grant_type='refresh_token',
-			refresh_token=self.response.refresh_token,
-			client_id=self.client.id,
-			client_secret=self.client.secret
+			refresh_token=self._data.refresh_token,
+			client_id=self.client_id,
+			client_secret=self.client_secret
 		)
 
-		r = Route('POST', TOKEN_URL)
-		data = await self.client.http.request(r, data=data, authorize=False)
+		data = await self._token(data)
 
 		ins = self.response_class(data)
-		ins.refresh_token = self.response.refresh_token
+		ins.refresh_token = self._data.refresh_token
+
 		return ins
 
 	def create_authorize_route(self):
 		params = dict(
-			client_id=self.client.id,
+			client_id=self.client_id,
 			redirect_uri=self.redirect_uri,
 			response_type='code'
 		)
@@ -79,8 +88,8 @@ class AuthorizationCodeFlow(Authorizer, RefreshableMixin):
 
 	def create_token_route(self, code):
 		data = dict(
-			client_id=self.client.id,
-			client_secret=self.client.secret,
+			client_id=self.client_id,
+			client_secret=self.client_secret,
 			grant_type='authorization_code',
 			code=code,
 			redirect_uri=self.redirect_uri
@@ -103,8 +112,10 @@ class AuthorizationCodeFlow(Authorizer, RefreshableMixin):
 
 
 class EasyCodeFlow(AuthorizationCodeFlow):
-	def __init__(self, scope=Scope.all(), store='tokens.json'):
-		super().__init__(scope, 'http://localhost/', EasyCodeFlowResponse)
+	_data: EasyCodeFlowResponse
+
+	def __init__(self, client_id, client_secret, scope=Scope.none(), store='tokens.json'):
+		super().__init__(client_id, client_secret, scope, 'http://localhost/', EasyCodeFlowResponse)
 		self.store = store
 
 	async def init(self):
@@ -118,16 +129,22 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 
 		code = self.get_code_from_redirect(code_url)
 
-		r, d = self.create_token_route(code)
-		data = await self.client.http.request(r, data=d, authorize=False)
+		d = dict(
+			client_id=self.client_id,
+			client_secret=self.client_secret,
+			grant_type='authorization_code',
+			code=code,
+			redirect_uri=self.redirect_uri
+		)
+
+		data = await self._token(d)
 
 		res = EasyCodeFlowResponse(data)
-
+		self._data = res
 		self.on_refresh(res)
-		self.response = res
 
 		# start refresh task
-		self.refresh_in(res.seconds_until_expire())
+		self._refresh_in(res.seconds_until_expire())
 
 	def close(self):
 		if self.refresh_task is not None:
@@ -138,14 +155,14 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 			with open(self.store, 'r') as f:
 				# load previous response from json data
 				data = json.loads(f.read())
-				self.response = self.response_class.from_data(data)
+				self._data = self.response_class.from_data(data)
 
 				# refresh it now if it's expired
-				if self.response.seconds_until_expire() < 0:
-					await self.dispatch_refresh()
-
-				# start the refresh task
-				self.refresh_in(self.response.seconds_until_expire())
+				if self._data.seconds_until_expire() < 0:
+					await self.refresh(start_task=True)
+				else:
+					# manually start refresh task if we didn't refresh on startup
+					self._refresh_in(self._data.seconds_until_expire())
 
 		except (FileNotFoundError, json.JSONDecodeError):
 			await self.init()
@@ -157,18 +174,15 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 
 class ClientCredentialsFlow(Authorizer, RefreshableMixin):
 	async def authorize(self):
-		response = await self.refresh()
-		self.refresh_in(response.seconds_until_expire())
-		self.response = response
+		await self.refresh(start_task=True)
 
-	async def refresh(self):
+	async def token(self):
 		d = dict(
 			grant_type='client_credentials',
-			client_id=self.client.id,
-			client_secret=self.client.secret
+			client_id=self.client_id,
+			client_secret=self.client_secret
 		)
 
-		r = Route('POST', TOKEN_URL)
-		data = await self.client.http.request(r, data=d, authorize=False)
+		data = await self._token(d)
 
 		return AuthenticationResponse(data)

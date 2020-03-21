@@ -44,7 +44,7 @@ class HTTP:
 	async def request(self, route, data=None, json=None, headers=None, authorize=True):
 
 		if authorize:
-			auth_header = self.client.auth.header()
+			auth_header = self.client.auth.header
 			if auth_header is None:
 				raise AuthenticationError('Authorize before attempting an authorized request.')
 
@@ -101,7 +101,8 @@ class HTTP:
 						if not authorize:
 							raise Unauthorized(r, error)
 
-						# re-auth
+						# not tested...
+						await self.client.refresh()
 
 					elif status_code == 403:
 						raise Forbidden(r, error)
@@ -114,6 +115,9 @@ class HTTP:
 
 					elif status_code >= 500:
 						continue
+
+					else:
+						raise HTTPException(r, 'Unhandled HTTP status code: %s' % status_code)
 
 		raise HTTPException(r, 'Request failed 5 times.')
 

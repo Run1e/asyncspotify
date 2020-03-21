@@ -1,15 +1,42 @@
 from asyncio import Task, create_task, sleep
 import logging
 
+from ..http import Route
+
 log = logging.getLogger(__name__)
 
 
 class RefreshableMixin:
 	_task: Task = None
 
-	def refresh_in(self, seconds: int, cancel_old=True):
+	async def refresh(self, start_task=True):
+		meth = getattr(self, 'token', None)
+
+		if not callable(meth):
+			raise ValueError('This authorizer does not support token refreshing')
+
+		try:
+			data = await meth()
+			self._data = data
+			self.on_refresh(data)
+		finally:
+			if start_task:
+				self._refresh_in(data.seconds_until_expire())
+
+	async def _token(self, data):
+		data = await self.client.http.request(
+			Route('POST', 'https://accounts.spotify.com/api/token'),
+			data=data,
+			authorize=False
+		)
+
+		#data['expires_in'] = 5
+
+		return data
+
+	def _refresh_in(self, seconds: int, cancel_task=True):
 		# cancel old task if it's running
-		if cancel_old and self._task is not None and not self._task.done():
+		if cancel_task and self._task is not None and not self._task.done():
 			self._task.cancel()
 
 		# and create new refresh task
@@ -21,15 +48,8 @@ class RefreshableMixin:
 			await sleep(seconds)
 			log.debug('%s seconds passed, refreshing access token now', seconds)
 
-		try:
-			await self.dispatch_refresh()
-		finally:
-			self.refresh_in(self.response.seconds_until_expire(), cancel_old=False)
-
-	async def dispatch_refresh(self):
-		response = await self.refresh()
-		self.on_refresh(self.response)
-		self.response = response
+		await self.refresh(start_task=False)
+		self._refresh_in(self._data.seconds_until_expire(), cancel_task=False)
 
 	def on_refresh(self, response):
 		pass

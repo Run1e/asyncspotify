@@ -37,6 +37,10 @@ class Flags:
 			setattr(obj, name, True)
 		return obj
 
+	@classmethod
+	def none(cls):
+		return cls(0b0)
+
 	def _set_flag(self, mask: int, toggle):
 		if toggle:
 			self._value |= mask
