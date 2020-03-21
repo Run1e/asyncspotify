@@ -14,12 +14,18 @@ class AuthenticationError(SpoofyException):
 class HTTPException(SpoofyException):
 	'''
 	Base exception of all HTTP related exceptions.
+
+	response: aiohttp.ClientResponse
+		The response of the failed HTTP request.
+	message: Optional[str]
+		Message about what went wrong.
+
 	'''
 
-	def __init__(self, resp, message=None):
-		self.response = resp
+	def __init__(self, response, message=None):
+		self.response = response
 		self.message = message
-		error = '{0.status} {0.reason}'.format(resp)
+		error = '{0.status} {0.reason}'.format(response)
 		if message is not None:
 			error += ' - {}'.format(self.message)
 		super().__init__(error)

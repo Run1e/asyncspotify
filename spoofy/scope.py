@@ -2,6 +2,11 @@ from .flags import Flag, Flags
 
 
 class Scope(Flags):
+	'''
+	Flags representing Spotify scopes.
+
+	'''
+
 	ugc_image_upload = Flag(0)
 	user_read_playback_state = Flag(1)
 	user_modify_playback_state = Flag(2)
@@ -21,4 +26,6 @@ class Scope(Flags):
 	user_follow_modify = Flag(16)
 
 	def string(self):
+		'''Get a string representation of the enabled scopes. Used when authenticating.'''
+
 		return ' '.join(name.replace('_', '-') for name, value in self if value)

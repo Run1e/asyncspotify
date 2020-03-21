@@ -23,9 +23,6 @@ Spotify Objects
 Track
 -----
 
-.. autoclass:: Track
-    :members:
-
 .. autoclass:: SimpleTrack
     :members:
 
@@ -38,9 +35,6 @@ Track
 Artist
 ------
 
-.. autoclass:: Artist
-    :members:
-
 .. autoclass:: SimpleArtist
     :members:
 
@@ -49,9 +43,6 @@ Artist
 
 Playlist
 --------
-
-.. autoclass:: Playlist
-    :members:
 
 .. autoclass:: SimplePlaylist
     :members:
@@ -62,9 +53,6 @@ Playlist
 Album
 -----
 
-.. autoclass:: Album
-    :members:
-
 .. autoclass:: SimpleAlbum
     :members:
 
@@ -73,9 +61,6 @@ Album
 
 User
 ----
-
-.. autoclass:: User
-    :members:
 
 .. autoclass:: PublicUser
     :members:
@@ -98,18 +83,14 @@ Device
 .. autoclass:: Device
     :members:
 
-OAuth
-=====
+Authenticators
+==============
 
-.. autoclass:: OAuth
+.. autoclass:: EasyCodeFlow
     :members:
-
-.. autocofunction:: easy_auth
 
 Exceptions
 ==========
-
-.. py:currentmodule:: spoofy.exceptions
 
 .. autoclass:: SpoofyException
 

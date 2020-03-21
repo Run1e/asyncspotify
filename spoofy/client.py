@@ -9,7 +9,7 @@ from .device import Device
 from .exceptions import NotFound, SpoofyException
 from .http import HTTP
 from .object import Object
-from .oauth.flows import Authorizer
+from .oauth.flows import Authenticator
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -26,18 +26,18 @@ class Client:
 
 	This is the class you should be interfacing with when fetching Spotify objects.
 
-	auth: :class:`Authorizer`
-		OAuth instance used for authenticating with the API.
+	auth: :class:`Authenticator`
+		Authenticator instance used for authenticating with the API.
 	'''
 
-	auth: Authorizer
+	auth: Authenticator
 	http: HTTP
 
 	def __init__(self, auth):
 		'''
 		Creates a Spotify Client instance.
 
-		:param auth: Instance of :class:`OAuth`
+		:param auth: Instance of :class:`Authenticator`
 		'''
 
 		self.auth = auth(self)
@@ -51,12 +51,15 @@ class Client:
 		await self.close()
 
 	async def authorize(self):
+		'''Tell the authenticator to authorize this client.'''
 		await self.auth.authorize()
 
 	async def refresh(self):
+		'''Tell the authenticator to refresh this client, if applicable.'''
 		await self.auth.refresh()
 
 	async def close(self):
+		'''Close this client session.'''
 		await self.http.close_session()
 
 	def _get_id(self, obj):
@@ -64,12 +67,6 @@ class Client:
 			return obj.id
 		else:
 			return obj
-
-	async def refresh_token(self):
-		'''Refresh the access and refresh tokens.'''
-
-		log.debug('Refreshing tokens')
-		await self.auth.refresh()
 
 	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:
 		'''
@@ -127,9 +124,17 @@ class Client:
 		Start playback on device.
 
 		:param device: :class:`Device` or Spotify ID.
-		:param kwargs: body params of the request. For example:
-		player_play(context_uri='spotify:album:6xKK037rfCf2f6gf30SpvL',
-					offset=dict(uri='spotify:track:2beor6qrB0XJxW1CM6X9x2'), position_ms=98500)
+		:param kwargs: body params of the request.
+
+		Example:
+
+		.. code-block:: py
+
+			player_play(
+				context_uri='spotify:album:6xKK037rfCf2f6gf30SpvL',
+				offset=dict(uri='spotify:track:2beor6qrB0XJxW1CM6X9x2'),
+				position_ms=98500
+			)
 		'''
 
 		await self.http.player_play(device_id=self._get_id(device), **kwargs)
@@ -319,7 +324,7 @@ class Client:
 		data = await self.http.get_me()
 		return PrivateUser(self, data)
 
-	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term'):
+	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term') -> List[SimpleTrack]:
 		'''
 		Gets the top tracks of the current user.
 
@@ -327,10 +332,13 @@ class Client:
 
 		:param int limit: How many tracks to return. Maximum is 50.
 		:param int offset: The index of the first result to return.
-		:param str time_range: The time period for which data are selected to form a top. Valid values:
-		- long_term (calculated from several years of data and including all new data as it becomes available),
-		- medium_term (approximately last 6 months),
-		- short_term (approximately last 4 weeks).
+		:param str time_range: The time period for which data are selected to form a top.
+
+		Valid values for ``time_range``
+		  - ``long_term`` (calculated from several years of data and including all new data as it becomes available),
+		  - ``medium_term`` (approximately last 6 months),
+		  - ``short_term`` (approximately last 4 weeks).
+
 		:return: List[:class:`SimpleTrack`]
 		'''
 
@@ -351,10 +359,13 @@ class Client:
 
 		:param int limit: How many artists to return. Maximum is 50.
 		:param int offset: The index of the first result to return.
-		:param str time_range: The time period for which data are selected to form a top. Valid values:
-		- long_term (calculated from several years of data and including all new data as it becomes available),
-		- medium_term (approximately last 6 months),
-		- short_term (approximately last 4 weeks).
+		:param str time_range: The time period for which data are selected to form a top.
+
+		Valid values for ``time_range``
+		  - ``long_term`` (calculated from several years of data and including all new data as it becomes available),
+		  - ``medium_term`` (approximately last 6 months),
+		  - ``short_term`` (approximately last 4 weeks).
+
 		:return: List[:class:`SimpleArtist`]
 		'''
 

@@ -1,4 +1,4 @@
-from asyncio import Task, create_task, sleep
+import asyncio
 import logging
 
 from ..http import Route
@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 
 class RefreshableMixin:
-	_task: Task = None
+	_task: asyncio.Task = None
 
 	async def refresh(self, start_task=True):
 		meth = getattr(self, 'token', None)
@@ -40,12 +40,12 @@ class RefreshableMixin:
 			self._task.cancel()
 
 		# and create new refresh task
-		self._task = create_task(self._refresh_in_meta(seconds))
+		self._task = asyncio.create_task(self._refresh_in_meta(seconds))
 
 	async def _refresh_in_meta(self, seconds):
 		if seconds > 0:
 			log.debug('Refreshing access token in %s seconds', seconds)
-			await sleep(seconds)
+			await asyncio.sleep(seconds)
 			log.debug('%s seconds passed, refreshing access token now', seconds)
 
 		await self.refresh(start_task=False)

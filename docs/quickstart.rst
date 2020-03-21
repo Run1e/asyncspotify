@@ -35,19 +35,23 @@ To communicate with the Spotify Web API, you have to create a Spotify Applicatio
 Go to `this page <https://developer.spotify.com/dashboard/applications>`_ and create an app.
 
 After having made an app, you will be forwarded to a page showing miscellaneous stats. The client id and client secret
-provided here is what you'll use when authenticating. If you're going to use :func:`easy_auth`, you have to click edit
-and add ``http://localhost/`` to the list of redirect URIs.
+provided here is what you'll use when authenticating. If you're going to use the :class:`EasyCodeFlow` authorizer,
+you have to click edit and add ``http://localhost/`` to the list of redirect URIs.
 
-To authenticate, you have to create an :class:`OAuth` instance. The easiest way of doing this is calling the
-convenience function :func:`easy_auth`. The following snippet shows how to authenticate and use the returned
-instance to create a Spoofy Client instance.
+To authenticate, you have to create an authenticator. If you do *not* need to access or modify personal data, you can
+simply use the :class:`ClientCredentialsFlow` class:
 
-.. literalinclude:: ../examples/authenticating.py
+.. literalinclude:: ../examples/clientcredentials.py
     :language: py
 
-The first time you authenticate, a link and some instructions will appear in your console. The link points to a page
-where you can grant yourself access. After granting access your browser will be redirected to a page (localhost if
-you're using :func:`easy_auth`). The redirect URL contains a code needed to continue. Copy the URL and paste it into
-your console and press enter (sometimes pressing enter twice is needed). After this you're finished authenticating!
+If you *do* need to access and modify personal data, you will have to use the Authentication Code flow and specify
+the *scope* you require. The easiest way to do this is to use the :class:`EasyCodeFlow` class, which will handle
+storing your tokens and fetching them when your program restarts:
+
+.. literalinclude:: ../examples/easycodeflow.py
+    :language: py
+
+The :class:`EasyCodeFlow` requires a first-time setup, please follow the steps in your console carefully.
+Remember to add ``http://localhost/`` to the list of redirect URIs on your Spotify Application page!
 
 To see some basic usage of the API, see the examples. For everything else, see the API Reference.

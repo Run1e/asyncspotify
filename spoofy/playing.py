@@ -70,9 +70,15 @@ class CurrentlyPlayingContext(CurrentlyPlaying):
 		'''
 		Starts playback.
 
-		:param kwargs: body Parameters of the request. For example:
-		player_play(context_uri='spotify:album:1Je1IMUlBXcx1Fz0WE7oPT',
-					offset=dict(uri='spotify:track:1301WleyT98MSxVHPZCA6M'), position_ms=1000)
+		:param kwargs: Body parameters of the request.
+
+		.. code-block:: py
+
+			player_play(
+				context_uri='spotify:album:1Je1IMUlBXcx1Fz0WE7oPT',
+				offset=dict(uri='spotify:track:1301WleyT98MSxVHPZCA6M'),
+				position_ms=1000
+			)
 		'''
 
 		await self._client.player_play(device=self.device.id, **kwargs)

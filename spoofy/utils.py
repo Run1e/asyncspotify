@@ -16,7 +16,7 @@ def find(items, **kwargs):
 	'''
 	Same as :func:`get` except it returns a list of all matching items.
 	
-	:param items: List or iterator containing :class:`Object` s
+	:param items: List or iterator containing :class:`Object`
 	:param kwargs: kwargs that should match with the objects attributes.
 	:return: List[:class:`Object`]
 	'''

@@ -13,7 +13,7 @@ AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
 
-class Authorizer:
+class Authenticator:
 	_client = None
 	_data: AuthenticationResponse = None
 
@@ -41,7 +41,7 @@ class Authorizer:
 		raise NotImplementedError
 
 
-class AuthorizationCodeFlow(Authorizer, RefreshableMixin):
+class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
 	_data: AuthorizationCodeFlowResponse
 
 	PARSE_ERROR = ValueError('Unable to get code from that redirect url')
@@ -151,6 +151,12 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 			self.refresh_task.cancel()
 
 	async def authorize(self):
+		'''
+		Authorize the client. Reads from the file specificed by `store`.
+
+		:return:
+		'''
+
 		try:
 			with open(self.store, 'r') as f:
 				# load previous response from json data
@@ -172,7 +178,7 @@ class EasyCodeFlow(AuthorizationCodeFlow):
 			f.write(json.dumps(response.to_dict(), indent=2))
 
 
-class ClientCredentialsFlow(Authorizer, RefreshableMixin):
+class ClientCredentialsFlow(Authenticator, RefreshableMixin):
 	async def authorize(self):
 		await self.refresh(start_task=True)
 
