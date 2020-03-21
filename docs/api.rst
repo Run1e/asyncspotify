@@ -129,7 +129,7 @@ is used here. To extend, it simply authorizes again.
 EasyCodeFlow
 ------------
 
-Extends :class:`AuthorizationCodeFlow` and requires one extra argument, ``scope``, which tells the authenticator where
+Extends :class:`AuthorizationCodeFlow` and requires one extra argument, ``store``, which tells the authenticator where
 to store tokens.
 
 .. autoclass:: EasyCodeFlow
