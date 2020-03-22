@@ -17,12 +17,16 @@ class RefreshableMixin:
 		if not callable(meth):
 			raise ValueError('This authorizer does not support token refreshing')
 
+		data = None
+
 		try:
 			data = await meth()
 			self._data = data
 			self.on_refresh(data)
 		finally:
 			if start_task:
+				if data is None:
+					raise RuntimeError('Can\'t restart token refresh task when previous refresh failed')
 				self._refresh_in(data.seconds_until_expire())
 
 	async def _token(self, data):

@@ -8,8 +8,8 @@ from .audiofeatures import AudioFeatures
 from .device import Device
 from .exceptions import NotFound, SpotifyException
 from .http import HTTP
-from .object import Object
 from .oauth.flows import Authenticator
+from .object import Object
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -18,6 +18,13 @@ from .user import PrivateUser, PublicUser
 from .utils import subslice
 
 log = logging.getLogger(__name__)
+
+
+def get_id(obj):
+	if isinstance(obj, Object):
+		return obj.id
+	else:
+		return obj
 
 
 class Client:
@@ -62,12 +69,6 @@ class Client:
 		'''Close this client session.'''
 		await self.http.close_session()
 
-	def _get_id(self, obj):
-		if isinstance(obj, Object):
-			return obj.id
-		else:
-			return obj
-
 	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:
 		'''
 		Get a context for what user is currently playing.
@@ -108,7 +109,7 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_next(device_id=self._get_id(device))
+		await self.http.player_next(device_id=get_id(device))
 
 	async def player_prev(self, device=None):
 		'''
@@ -117,7 +118,7 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_prev(device_id=self._get_id(device))
+		await self.http.player_prev(device_id=get_id(device))
 
 	async def player_play(self, device=None, **kwargs):
 		'''
@@ -137,7 +138,7 @@ class Client:
 			)
 		'''
 
-		await self.http.player_play(device_id=self._get_id(device), **kwargs)
+		await self.http.player_play(device_id=get_id(device), **kwargs)
 
 	async def player_pause(self, device=None):
 		'''
@@ -146,7 +147,7 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_pause(device_id=self._get_id(device))
+		await self.http.player_pause(device_id=get_id(device))
 
 	async def player_seek(self, time, device=None):
 		'''
@@ -157,8 +158,8 @@ class Client:
 		'''
 
 		if isinstance(time, timedelta):
-			time = time.days * (1000*60*60*24) + time.seconds * 1000 + time.microseconds // 1000
-		await self.http.player_seek(time, self._get_id(device))
+			time = time.days * (1000 * 60 * 60 * 24) + time.seconds * 1000 + time.microseconds // 1000
+		await self.http.player_seek(time, get_id(device))
 
 	async def player_repeat(self, state, device=None):
 		'''
@@ -168,7 +169,7 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_repeat(state, self._get_id(device))
+		await self.http.player_repeat(state, get_id(device))
 
 	async def player_volume(self, volume, device=None):
 		'''
@@ -178,7 +179,7 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_volume(volume, self._get_id(device))
+		await self.http.player_volume(volume, get_id(device))
 
 	async def player_shuffle(self, state, device=None):
 		'''
@@ -188,90 +189,108 @@ class Client:
 		:param device: :class:`Device` or Spotify ID.
 		'''
 
-		await self.http.player_shuffle(state, self._get_id(device))
+		await self.http.player_shuffle(state, get_id(device))
 
-	async def search(self, *types, q, limit=10, **kwargs) -> dict:
+	async def search(self, *types, q, market=None, limit=None, offset=None, include_external=None) -> dict:
 		'''
 		Searches for tracks, artists, albums and/or playlists.
 
-		:param types: The strings 'tracks', 'artists', 'albums' and/or 'playlist' - or you can pass the class equivalents.
-		:param str q: The search query. See Spotifys query construction guide `here. <https://developer.spotify.com/documentation/web-api/reference/search/search/>`_
+		https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+
+		:param types: One or more of the strings ``track``, ``album``, ``artist``, ``playlist`` or the class equivalents.
+		:param str q: The search query. See Spotifys' query construction guide `here. <https://developer.spotify.com/documentation/web-api/reference/search/search/>`_
+		:param market: ISO-3166_ country code or the string ``from_token``.
 		:param int limit: How many results of each type to return.
-		:param kwargs: other query params for this method
+		:param offset: Where to start the pagination.
+		:param include_external: If this is equal to ``audio``, the specified the response will include any relevant audio content that is hosted externally.
+
 		:return: A dict with a key for each type, whose values are a list of instances.
 		'''
 
-		if q is None:
-			raise SpotifyException('Search query required.')
-
-		finished_types = []
-		for tpe in types:
-			if hasattr(tpe, '_type') and issubclass(tpe, Object):
-				finished_types.append(tpe._type)
-			elif isinstance(tpe, str):
-				finished_types.append(tpe)
+		actual_types = []
+		for type in types:
+			if isinstance(type, (SimpleTrack, SimpleAlbum, SimpleArtist, SimplePlaylist)):
+				actual_types.append(type._type)
+			elif isinstance(type, str):
+				actual_types.append(type.lower())
 			else:
-				raise SpotifyException('Unknown type.')
+				raise ValueError('Unknown type: %s' % str(type))
 
-		data = await self.http.search(finished_types, q, limit=limit if limit < 50 else 50, **kwargs)
+		data = await self.http.search(
+			q, ','.join(actual_types),
+			market=market,
+			limit=limit,
+			offset=offset,
+			include_external=include_external
+		)
 
 		results = {}
-		for tpe in finished_types:
-			results[tpe + 's'] = []
 
-		if 'tracks' in results:
+		if 'tracks' in data:
+			results['tracks'] = []
 			async for track_obj in SearchPager(self.http, data, 'tracks', limit):
 				results['tracks'].append(SimpleTrack(self, track_obj))
-		if 'albums' in results:
+
+		if 'albums' in data:
+			results['albums'] = []
 			async for album_obj in SearchPager(self.http, data, 'albums', limit):
 				results['albums'].append(SimpleAlbum(self, album_obj))
-		if 'artists' in results:
+
+		if 'artists' in data:
+			results['artists'] = []
 			async for artist_obj in SearchPager(self.http, data, 'artists', limit):
 				results['artists'].append(FullArtist(self, artist_obj))
-		if 'playlists' in results:
+
+		if 'playlists' in data:
+			results['playlists'] = []
 			async for artist_obj in SearchPager(self.http, data, 'playlists', limit):
 				results['playlists'].append(SimplePlaylist(self, artist_obj))
 
 		return results
 
-	async def search_tracks(self, q=None, limit=20) -> List[SimpleTrack]:
+	async def search_tracks(self, q, market=None, limit=None, offset=None, include_external=None) -> List[SimpleTrack]:
 		'''
 		Alias for ``Client.search('track', ...)``
 
 		:return: List[:class:`SimpleTrack`]
 		'''
 
-		results = await self.search('track', q=q, limit=limit)
+		results = await self.search('track', q=q, market=market, limit=limit, offset=offset,
+			include_external=include_external)
 		return results['tracks']
 
-	async def search_artists(self, q=None, limit=20) -> List[FullArtist]:
+	async def search_artists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[FullArtist]:
 		'''
 		Alias for ``Client.search('artist, ...)``
 
 		:return: List[:class:`FullArtist`]
 		'''
 
-		results = await self.search('artist', q=q, limit=limit)
+		results = await self.search('artist', q=q, market=market, limit=limit, offset=offset,
+			include_external=include_external)
 		return results['artists']
 
-	async def search_albums(self, q=None, limit=20, **kwargs) -> List[SimpleAlbum]:
+	async def search_albums(self, q, market=None, limit=None, offset=None, include_external=None) -> List[SimpleAlbum]:
 		'''
 		Alias for ``Client.search('album', ...)``
 
 		:return: List[:class:`SimpleAlbum`]
 		'''
 
-		results = await self.search('album', q=q, limit=limit, **kwargs)
+		results = await self.search('album', q=q, market=market, limit=limit, offset=offset,
+			include_external=include_external)
 		return results['albums']
 
-	async def search_playlists(self, q=None, limit=20) -> List[SimplePlaylist]:
+	async def search_playlists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[
+		SimplePlaylist]:
 		'''
 		Alias for ``Client.search('playlist', ...)``
 
 		:return: List[:class:`SimplePlaylist`]
 		'''
 
-		results = await self.search('playlist', q=q, limit=limit)
+		results = await self.search('playlist', q=q, market=market, limit=limit, offset=offset,
+			include_external=include_external)
 		return results['playlists']
 
 	async def search_track(self, q=None) -> SimpleTrack:
@@ -324,7 +343,7 @@ class Client:
 		data = await self.http.get_me()
 		return PrivateUser(self, data)
 
-	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term') -> List[SimpleTrack]:
+	async def get_me_top_tracks(self, limit=None, offset=None, time_range=None) -> List[SimpleTrack]:
 		'''
 		Gets the top tracks of the current user.
 
@@ -395,9 +414,7 @@ class Client:
 
 		return PublicUser(self, data)
 
-	async def create_playlist(
-			self, user, name='Unnamed playlist', description=None, public=False, collaborative=False
-	) -> FullPlaylist:
+	async def create_playlist(self, user, name, public=False, collaborative=False, description=None) -> FullPlaylist:
 		'''
 		Create a new playlist.
 
@@ -409,7 +426,12 @@ class Client:
 		:return: A :class:`FullPlaylist` instance.
 		'''
 
-		data = await self.http.create_playlist(user, name, description, public, collaborative)
+		data = await self.http.create_playlist(
+			get_id(user), name,
+			public=public,
+			collaborative=collaborative,
+			description=description
+		)
 
 		playlist = FullPlaylist(self, data)
 		playlist._tracks = dict()
@@ -427,17 +449,15 @@ class Client:
 		:param bool collaborative: New collaborative state of the playlist.
 		'''
 
-		playlist = self._get_id(playlist)
-
 		await self.http.edit_playlist(
-			playlist_id=playlist,
+			playlist_id=get_id(playlist),
 			name=name,
 			description=description,
 			public=public,
 			collaborative=collaborative
 		)
 
-	async def playlist_add_tracks(self, playlist, tracks, position=0):
+	async def playlist_add_tracks(self, playlist, *tracks, position=None):
 		'''
 		Add several tracks to a playlist.
 
@@ -446,19 +466,20 @@ class Client:
 		:param int position: Position in the playlist to insert tracks.
 		'''
 
-		playlist = self._get_id(playlist)
+		playlist = get_id(playlist)
 
-		tracks_fin = []
+		uris = []
 
-		for index, track in enumerate(tracks):
-			if isinstance(track, Object):
-				track = track.id
+		for track in tracks:
+			track = get_id(track)
+
 			if not track.startswith('spotify:track:'):
 				track = 'spotify:track:' + track
-			tracks_fin.append(track)
 
-		for slice in subslice(tracks_fin, 100):
-			await self.http.playlist_add_tracks(playlist, slice, position=position)
+			uris.append(track)
+
+		for chunk in subslice(uris, 100):
+			await self.http.playlist_add_tracks(playlist, uris=chunk, position=position)
 
 	async def get_playlist(self, playlist_id) -> Optional[FullPlaylist]:
 		'''
@@ -486,7 +507,7 @@ class Client:
 		:return: List[:class:`PlaylistTrack`]
 		'''
 
-		playlist = self._get_id(playlist)
+		playlist = get_id(playlist)
 
 		data = await self.http.get_playlist_tracks(playlist)
 
@@ -505,7 +526,7 @@ class Client:
 		:return: List[:class:`SimplePlaylist`]
 		'''
 
-		user = self._get_id(user)
+		user = get_id(user)
 
 		data = await self.http.get_user_playlists(user)
 
@@ -549,8 +570,8 @@ class Client:
 
 		tracks = []
 
-		for slice in subslice(track_ids, 50):
-			data = await self.http.get_tracks(slice)
+		for chunk in subslice(track_ids, 50):
+			data = await self.http.get_tracks(','.join(get_id(obj) for obj in chunk))
 
 			for track_obj in data['tracks']:
 				if track_obj is None:
@@ -568,7 +589,7 @@ class Client:
 		:return: :class:`AudioFeatures`
 		'''
 
-		track = self._get_id(track)
+		track = get_id(track)
 
 		try:
 			data = await self.http.get_audio_features(track)
@@ -592,7 +613,8 @@ class Client:
 
 		return FullArtist(self, data)
 
-	async def get_artist_albums(self, artist_id, limit=50, **kwargs) -> List[SimpleAlbum]:
+	async def get_artist_albums(self, artist_id, include_groups=None, country=None, limit=None, offset=None) -> List[
+		SimpleAlbum]:
 		'''
 		Get an artist's albums
 		:param str artist_id: Spotify ID of artist.
@@ -604,7 +626,9 @@ class Client:
 		albums = []
 
 		try:
-			data = await self.http.get_artist_albums(artist_id, limit=limit if limit < 50 else 50, **kwargs)
+			data = await self.http.get_artist_albums(
+				artist_id, include_groups=include_groups, country=country, limit=max(limit, 50), offset=offset
+			)
 		except NotFound:
 			return albums
 
@@ -623,8 +647,8 @@ class Client:
 
 		artists = []
 
-		for slice in subslice(artist_ids, 2):
-			data = await self.http.get_artists(slice)
+		for chunk in subslice(artist_ids, 2):
+			data = await self.http.get_artists(','.join(get_id(obj) for obj in chunk))
 
 			for artist_obj in data['artists']:
 				if artist_obj is None:
@@ -643,7 +667,7 @@ class Client:
 		:return: A list of maximum 10 :class:`FullTrack` instances.
 		'''
 
-		artist_id = self._get_id(artist)
+		artist_id = get_id(artist)
 
 		data = await self.http.get_artist_top_tracks(artist_id, market=market)
 
@@ -662,7 +686,7 @@ class Client:
 		:return: A list of maximum 20 :class:`FullArtist` instances.
 		'''
 
-		artist_id = self._get_id(artist)
+		artist_id = get_id(artist)
 
 		data = await self.http.get_artist_related_artists(artist_id)
 
@@ -692,7 +716,7 @@ class Client:
 
 		return album
 
-	async def get_albums(self, *album_ids, **kwargs) -> List[FullAlbum]:
+	async def get_albums(self, *album_ids, market=None) -> List[FullAlbum]:
 		'''
 		Get several albums.
 
@@ -704,7 +728,7 @@ class Client:
 		albums = []
 
 		for chunk in subslice(album_ids, 20):
-			data = await self.http.get_albums(chunk, **kwargs)
+			data = await self.http.get_albums(','.join(get_id(obj) for obj in chunk), market=market)
 
 			for album_obj in data['albums']:
 				if album_obj is None:
@@ -725,7 +749,7 @@ class Client:
 		:return: List[:class:`SimpleTrack`]
 		'''
 
-		album = self._get_id(album)
+		album = get_id(album)
 
 		data = await self.http.get_album_tracks(album, **kwargs)
 
@@ -736,7 +760,7 @@ class Client:
 
 		return tracks
 
-	async def get_followed_artists(self, type='artist', limit=float('inf')) -> List[SimpleArtist]:
+	async def get_followed_artists(self, type='artist', limit=None, after=None) -> List[SimpleArtist]:
 		'''
 		Get user's followed artists
 
@@ -745,26 +769,27 @@ class Client:
 		:return: List[:class:`SimpleArtist`]
 		'''
 
-		data = await self.http.get_followed_artists(type=type, limit=limit if limit < 50 else 50)
-
-		artists = []
-
 		if type != 'artist':
 			raise SpotifyException('Currently only artist is supported.')
+
+		data = await self.http.get_followed_artists(type=type, limit=limit, after=after)
+
+		artists = []
 
 		async for artist_obj in CursorBasedPaging(self.http, data, 'artists', limit):
 			artists.append(SimpleArtist(self, artist_obj))
 
 		return artists
 
-	async def following(self, type, *ids, **kwargs):
+	async def following(self, type, *ids, limit=None, after=None):
 		'''
-		Follow artists or users
+		Follow artists or users.
 
 		:param str type: The ID type: either artist or user.
 		:param str ids: Spotify ID of the artist or the user.
-		:param kwargs: other query params for this method
+		:param limit: Maximum number of items to return.
+		:param after: The last artist ID retrieved from the previous request.
 		'''
 
 		for chunk in subslice(ids, 50):
-			await self.http.following(type=type, ids=chunk, **kwargs)
+			await self.http.following(type=type, ids=','.join(get_id(obj) for obj in chunk), limit=limit, after=after)

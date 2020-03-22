@@ -1,3 +1,5 @@
+.. _ISO-3166: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+
 .. currentmodule:: asyncspotify
 
 API Reference

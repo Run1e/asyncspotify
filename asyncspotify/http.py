@@ -1,15 +1,18 @@
 import asyncio
-from aiohttp import ClientSession
-
-from json import loads, JSONDecodeError
 import logging
 from asyncio import Lock, sleep
-
+from json import JSONDecodeError, loads
 from urllib.parse import urlencode
+
+from aiohttp import ClientSession
 
 from .exceptions import *
 
 log = logging.getLogger(__name__)
+
+
+def filter_nones(kwargs):
+	return {k: v for k, v in kwargs.items() if v is not None}
 
 
 class Route:
@@ -18,7 +21,7 @@ class Route:
 	def __init__(self, method: str, url: str, **params):
 		self.method = method.upper()
 		self.url = url if url.startswith('http') else '{0}/{1}'.format(self.BASE, url)
-		self.params = params
+		self.params = {k: v for k, v in params.items() if v is not None}
 
 	def __repr__(self):
 		return '<Route {0.method} url={0.url} params={0.params}>'.format(self)
@@ -98,11 +101,7 @@ class HTTP:
 						raise BadRequest(r, error)
 
 					elif status_code == 401:
-						if not authorize:
-							raise Unauthorized(r, error)
-
-						# not tested...
-						await self.client.refresh()
+						raise Unauthorized(r, error)
 
 					elif status_code == 403:
 						raise Forbidden(r, error)
@@ -172,26 +171,27 @@ class HTTP:
 
 	async def player_shuffle(self, state, device_id):
 		query = dict(state='true' if state else 'false')
+
 		if device_id is not None:
 			query['device'] = device_id
 
 		r = Route('PUT', 'me/player/shuffle', **query)
 		await self.request(r)
 
-	async def search(self, types, query, limit, **kwargs):
-		r = Route('GET', 'search', type=','.join(types), q=query, limit=limit, **kwargs)
+	async def search(self, q, type, **kwargs):
+		r = Route('GET', 'search', type=type, q=q, **kwargs)
 		return await self.request(r)
 
 	async def get_me(self):
 		r = Route('GET', 'me')
 		return await self.request(r)
 
-	async def get_me_top_tracks(self, limit=20, offset=0, time_range='medium_term'):
-		r = Route('GET', 'me/top/tracks', limit=limit, offset=offset, time_range=time_range)
+	async def get_me_top_tracks(self, **kwargs):
+		r = Route('GET', 'me/top/tracks', **kwargs)
 		return await self.request(r)
 
-	async def get_me_top_artists(self, limit=20, offset=0, time_range='medium_term'):
-		r = Route('GET', 'me/top/artists', limit=limit, offset=offset, time_range=time_range)
+	async def get_me_top_artists(self, **kwargs):
+		r = Route('GET', 'me/top/artists', **kwargs)
 		return await self.request(r)
 
 	async def get_playlist(self, playlist_id):
@@ -209,32 +209,23 @@ class HTTP:
 		r = Route('GET', 'playlists/{0}/tracks'.format(playlist_id))
 		return await self.request(r)
 
-	async def playlist_add_tracks(self, playlist_id, track_ids, position=0):
-		req = Route('POST', 'playlists/{0}/tracks'.format(playlist_id))
-		return await self.request(req, json=dict(uris=track_ids, position=position))
+	async def playlist_add_tracks(self, playlist_id, **kwargs):
+		data = dict(**filter_nones(kwargs))
 
-	async def create_playlist(self, user_id, name, description, public, collaborative):
-		data = dict(
-			name=name,
-			description=description,
-			public=public,
-			collaborative=collaborative
-		)
-
-		r = Route('POST', 'users/{0}/playlists'.format(user_id))
-
+		r = Route('POST', 'playlists/{0}/tracks'.format(playlist_id))
 		return await self.request(r, json=data)
 
-	async def edit_playlist(self, playlist_id, name, description, public, collaborative):
-		new = dict()
+	async def create_playlist(self, user_id, name, **kwargs):
+		data = dict(name=name, **filter_nones(kwargs))
 
-		for key, value in dict(name=name, description=description, public=public, collaborative=collaborative).items():
-			if value is not None:
-				new[key] = value
+		r = Route('POST', 'users/{0}/playlists'.format(user_id))
+		return await self.request(r, json=data)
+
+	async def edit_playlist(self, playlist_id, **kwargs):
+		data = filter_nones(kwargs)
 
 		r = Route('PUT', 'playlists/{0}'.format(playlist_id))
-
-		await self.request(r, json=new)
+		await self.request(r, json=data)
 
 	async def get_user(self, user_id):
 		r = Route('GET', 'users/{0}'.format(user_id))
@@ -245,7 +236,7 @@ class HTTP:
 		return await self.request(r)
 
 	async def get_tracks(self, track_ids):
-		r = Route('GET', 'tracks', ids=','.join(track_ids))
+		r = Route('GET', 'tracks', ids=track_ids)
 		return await self.request(r)
 
 	async def get_audio_features(self, track_id):
@@ -256,16 +247,16 @@ class HTTP:
 		r = Route('GET', 'artists/{0}'.format(artist_id))
 		return await self.request(r)
 
-	async def get_artist_albums(self, artist_id, limit=50, **kwargs):
-		req = Route('GET', 'artists/{0}/albums'.format(artist_id), limit=limit, **kwargs)
+	async def get_artist_albums(self, artist_id, **kwargs):
+		req = Route('GET', 'artists/{0}/albums'.format(artist_id), **kwargs)
 		return await self.request(req)
 
 	async def get_artists(self, artist_ids):
-		r = Route('GET', 'artists', ids=','.join(artist_ids))
+		r = Route('GET', 'artists', ids=artist_ids)
 		return await self.request(r)
 
-	async def get_artist_top_tracks(self, artist_id, market):
-		r = Route('GET', 'artists/{0}/top-tracks'.format(artist_id), market=market)
+	async def get_artist_top_tracks(self, artist_id, **kwargs):
+		r = Route('GET', 'artists/{0}/top-tracks'.format(artist_id), **kwargs)
 		return await self.request(r)
 
 	async def get_artist_related_artists(self, artist_id):
@@ -277,17 +268,17 @@ class HTTP:
 		return await self.request(r)
 
 	async def get_albums(self, album_ids, **kwargs):
-		r = Route('GET', 'albums', ids=','.join(album_ids), **kwargs)
+		r = Route('GET', 'albums', ids=album_ids, **kwargs)
 		return await self.request(r)
 
 	async def get_album_tracks(self, album_id, **kwargs):
 		r = Route('GET', 'albums/{0}/tracks'.format(album_id), limit=50, **kwargs)
 		return await self.request(r)
 
-	async def get_followed_artists(self, type='artist', limit=50):
-		r = Route('GET', 'me/following', type=type, limit=limit)
+	async def get_followed_artists(self, type, **kwargs):
+		r = Route('GET', 'me/following', type=type, **kwargs)
 		return await self.request(r)
 
 	async def following(self, type, ids, **kwargs):
-		r = Route('PUT', 'me/following', type=type, ids=','.join(ids), **kwargs)
+		r = Route('PUT', 'me/following', type=type, ids=ids, **kwargs)
 		await self.request(r)

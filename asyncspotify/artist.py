@@ -15,19 +15,28 @@ class _BaseArtist(Object, ExternalURLMixin):
 		Returns this artists top tracks.
 
 		:param market: Market to find tracks for.
-		:return: A list of maximum 10 :class:`FullTrack` instances.
+		:return: List[:class:`FullTrack`]
 		'''
 
 		return await self._client.get_artist_top_tracks(self.id, market=market)
 
 	async def related_artists(self):
 		'''
-		Get related artists.
+		Get related artists. Maximum of 20 artists.
 
-		:return: A list of maximum 20 :class:`FullArtist` instances.
+		:return: List[:class:`FullArtist`]
 		'''
 
 		return await self._client.get_artist_related_artists(self.id)
+
+	async def albums(self, **kwargs):
+		'''
+		Get artist' albums
+
+		:return: List[:class:`SimpleAlbum`]
+		'''
+
+		return await self._client.get_artist_albums()
 
 
 class SimpleArtist(_BaseArtist):

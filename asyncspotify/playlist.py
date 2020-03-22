@@ -18,7 +18,7 @@ class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin)
 		self._fill_external_urls(data.pop('external_urls'))
 		self._fill_images(data.pop('images'))
 
-	async def edit(self, name=None, description=None, public=None, collaborative=None):
+	async def edit(self, name=None, public=None, collaborative=None, description=None):
 		'''
 		Edit the playlist.
 		
@@ -31,12 +31,12 @@ class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin)
 		await self._client.edit_playlist(
 			playlist=self.id,
 			name=name,
-			description=description,
 			public=public,
-			collaborative=collaborative
+			collaborative=collaborative,
+			description=description,
 		)
 
-	async def add_track(self, track, position=0):
+	async def add_track(self, track, position=None):
 		'''
 		Add a track to the playlist.
 
@@ -44,17 +44,17 @@ class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin)
 		:param int position: Position in the playlist to insert tracks.
 		'''
 
-		await self._client.playlist_add_tracks(self.id, [track], position=position)
+		await self._client.playlist_add_tracks(self.id, track, position=position)
 
-	async def add_tracks(self, *tracks, position=0):
+	async def add_tracks(self, *tracks, position=None):
 		'''
 		Add several tracks to the playlist.
 
-		:param tracks: List of Spotify IDs or :class:`Track` instances (or a mix).
+		:param tracks: Several Spotify IDs or :class:`Track` instances (or a mix).
 		:param int position: Position in the playlist to insert tracks.
 		'''
 
-		await self._client.playlist_add_tracks(self.id, tracks, position=position)
+		await self._client.playlist_add_tracks(self.id, *tracks, position=position)
 
 
 class SimplePlaylist(_BasePlaylist):

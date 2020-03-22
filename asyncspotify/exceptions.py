@@ -25,9 +25,12 @@ class HTTPException(SpotifyException):
 	def __init__(self, response, message=None):
 		self.response = response
 		self.message = message
+
 		error = '{0.status} {0.reason}'.format(response)
+
 		if message is not None:
-			error += ' - {}'.format(self.message)
+			error += ': {}'.format(self.message)
+
 		super().__init__(error)
 
 

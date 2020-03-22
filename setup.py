@@ -8,7 +8,7 @@ with open('requirements.txt', 'r') as f:
 
 setuptools.setup(
     name="asyncspotify",
-    version="0.11.1",
+    version="0.11.3",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
     description="Spotify Web API implementation that is fully asynchronous and object-oriented.",
