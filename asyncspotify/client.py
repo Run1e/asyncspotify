@@ -5,6 +5,7 @@ from typing import List, Optional
 from .album import FullAlbum, SimpleAlbum
 from .artist import FullArtist, SimpleArtist
 from .audiofeatures import AudioFeatures
+from .audioanalysis import AudioAnalysis
 from .device import Device
 from .exceptions import NotFound, SpotifyException
 from .http import HTTP
@@ -597,6 +598,23 @@ class Client:
 			return None
 
 		return AudioFeatures(self, data)
+
+	async def get_audio_analysis(self, track) -> Optional[AudioAnalysis]:
+		'''
+		Get 'Audio Analysis' of a track.
+
+		:param track: :class:`Track` instance or Spotify ID.
+		:return: :class:`AudioAnalysis`
+		'''
+
+		track = get_id(track)
+
+		try:
+			data = await self.http.get_audio_analysis(track)
+		except NotFound:
+			return None
+
+		return AudioAnalysis(self, data)
 
 	async def get_artist(self, artist_id) -> Optional[FullArtist]:
 		'''
