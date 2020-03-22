@@ -28,6 +28,7 @@ class _BaseUser(Object, ExternalURLMixin, ImageMixin):
 		
 		Alias of :meth:`Client.get_user_playlists`
 		'''
+
 		return await self._client.get_user_playlists(self.id)
 
 

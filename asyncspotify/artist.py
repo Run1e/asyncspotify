@@ -29,14 +29,20 @@ class _BaseArtist(Object, ExternalURLMixin):
 
 		return await self._client.get_artist_related_artists(self.id)
 
-	async def albums(self, **kwargs):
+	async def albums(self, include_groups=None, country=None, limit=None, offset=None):
 		'''
 		Get artist' albums
 
 		:return: List[:class:`SimpleAlbum`]
 		'''
 
-		return await self._client.get_artist_albums()
+		return await self._client.get_artist_albums(
+			self.id,
+			include_groups=include_groups,
+			country=country,
+			limit=limit,
+			offset=offset
+		)
 
 
 class SimpleArtist(_BaseArtist):
