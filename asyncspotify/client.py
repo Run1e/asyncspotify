@@ -655,7 +655,7 @@ class Client:
 		Returns the top tracks for an artist.
 
 		:param artist: :class:`Artist` instance or Spotify ID.
-		:param market: ISO-3166_1_ country code. Leave blank to let the library auto-resolve this.
+		:param market: ISO-3166-1_ country code. Leave blank to let the library auto-resolve this.
 		:return: A list of maximum 10 :class:`FullTrack` instances.
 		'''
 
