@@ -35,7 +35,7 @@ class PublicUser(_BaseUser):
 		Spotify ID of the user.
 	name: str
 		Name of the user. Also aliased to the ``display_name`` attribute.
-	images: List[:class:`Image`] or None
+	images: List[:class:`Image`]
 		List of associated images, such as the users profile picture.
 	uri: str
 		Spotify URI of the user.
@@ -49,10 +49,25 @@ class PublicUser(_BaseUser):
 
 
 class PrivateUser(_BaseUser):
+	'''
+	Represents a private User object, usually fetched through the ``me`` endpoint.
+
+	This type has some additional attributes not existent in :class:`PublicUser`.
+
+	country: str
+		ISO-3166_ code of users country.
+	email: str
+		Email of user. Please do not this email is not necessarily verified by Spotify.
+	product: str
+		Users Spotify subscription level, could be ``free``, ``open`` or ``premium``. ``free`` and ``open`` are synonyms.
+	'''
+
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
-		self.birthdate = data.pop('birthdate', None)
+		# this seems to have been removed from the api listing?
+		#self.birthdate = data.pop('birthdate', None)
+
 		self.country = data.pop('country', None)
 		self.email = data.pop('email', None)
 		self.product = data.pop('product', None)
