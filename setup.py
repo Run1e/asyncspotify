@@ -8,13 +8,13 @@ with open('requirements.txt', 'r') as f:
 
 setuptools.setup(
     name="asyncspotify",
-    version="0.11.4",
+    version="0.11.5",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
     description="Spotify Web API implementation that is fully asynchronous and object-oriented.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    keywords='spotify async aio asyncio api',
+    keywords='spotify async aio asyncio api webapi',
     install_requires=install_requires,
     url="https://github.com/Run1e/asyncspotify",
     project_urls={
