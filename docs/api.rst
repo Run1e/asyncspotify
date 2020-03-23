@@ -42,7 +42,7 @@ Spotify Objects
 
    None of these objects should be instantiated manually. They are returned by convenience methods in :class:`Client`.
 
-.. autoclass:: Object
+.. autoclass:: SpotifyObject
    :members:
 
 Track

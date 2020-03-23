@@ -1,4 +1,4 @@
-class Object:
+class SpotifyObject:
 	'''
 	Represents a generic Spotify Object.
 	
