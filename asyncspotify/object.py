@@ -27,6 +27,12 @@ class SpotifyObject:
 	def type(self):
 		return self._type
 
+	def __eq__(self, other):
+		return self.id == other.id
+
+	def __ne__(self, other):
+		return not self.__eq__(other)
+
 	def __repr__(self):
 		repr = self.__class__.__name__
 		if self.id is not None:

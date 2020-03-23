@@ -39,11 +39,11 @@ class ExternalIDMixin:
 class ExternalURLMixin:
 	def __init__(self, data):
 		external_urls = data.pop('external_urls')
-		self.urls = {}
+		self.external_urls = {}
 
-		self.link = external_urls.pop('spotify', None)
+		self.link = external_urls.get('spotify', None)
 		for site, url in external_urls.items():
-			self.urls[site] = url
+			self.external_urls[site] = url
 
 
 class TrackMixin:

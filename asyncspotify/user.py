@@ -55,7 +55,7 @@ class PrivateUser(_BaseUser):
 	This type has some additional attributes not existent in :class:`PublicUser`.
 
 	country: str
-		ISO-3166_ code of users country.
+		ISO-3166-1_ code of users country.
 	email: str
 		Email of user. Please do not this email is note necessarily verified by Spotify.
 	product: str

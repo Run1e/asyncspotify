@@ -1,14 +1,14 @@
 import logging
 from datetime import timedelta
-from typing import List, Optional
+from typing import List
 
 from .album import FullAlbum, SimpleAlbum
 from .artist import FullArtist, SimpleArtist
 from .audiofeatures import AudioFeatures
 from .device import Device
-from .exceptions import NotFound, SpotifyException
+from .exceptions import *
 from .http import HTTP
-from .oauth.flows import Authenticator
+from .oauth.flows import Authenticator, RefreshableMixin
 from .object import SpotifyObject
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
@@ -67,7 +67,14 @@ class Client:
 
 	async def close(self):
 		'''Close this client session.'''
+
+		if isinstance(self.auth, RefreshableMixin):
+			self.auth._task.cancel()
+
 		await self.http.close_session()
+
+	def _ensure_market(self, market):
+		return self.auth.market if market is None else market
 
 	async def get_player(self, **kwargs) -> CurrentlyPlayingContext:
 		'''
@@ -195,11 +202,9 @@ class Client:
 		'''
 		Searches for tracks, artists, albums and/or playlists.
 
-		https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-
 		:param types: One or more of the strings ``track``, ``album``, ``artist``, ``playlist`` or the class equivalents.
 		:param str q: The search query. See Spotifys' query construction guide `here. <https://developer.spotify.com/documentation/web-api/reference/search/search/>`_
-		:param market: ISO-3166_ country code or the string ``from_token``.
+		:param market: ISO-3166-1_ country code or the string ``from_token``.
 		:param int limit: How many results of each type to return.
 		:param offset: Where to start the pagination.
 		:param include_external: If this is equal to ``audio``, the specified the response will include any relevant audio content that is hosted externally.
@@ -255,8 +260,9 @@ class Client:
 		:return: List[:class:`SimpleTrack`]
 		'''
 
-		results = await self.search('track', q=q, market=market, limit=limit, offset=offset,
-			include_external=include_external)
+		results = await self.search(
+			'track', q=q, market=market, limit=limit, offset=offset, include_external=include_external
+		)
 		return results['tracks']
 
 	async def search_artists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[FullArtist]:
@@ -266,8 +272,9 @@ class Client:
 		:return: List[:class:`FullArtist`]
 		'''
 
-		results = await self.search('artist', q=q, market=market, limit=limit, offset=offset,
-			include_external=include_external)
+		results = await self.search(
+			'artist', q=q, market=market, limit=limit, offset=offset, include_external=include_external
+		)
 		return results['artists']
 
 	async def search_albums(self, q, market=None, limit=None, offset=None, include_external=None) -> List[SimpleAlbum]:
@@ -277,8 +284,9 @@ class Client:
 		:return: List[:class:`SimpleAlbum`]
 		'''
 
-		results = await self.search('album', q=q, market=market, limit=limit, offset=offset,
-			include_external=include_external)
+		results = await self.search(
+			'album', q=q, market=market, limit=limit, offset=offset, include_external=include_external
+		)
 		return results['albums']
 
 	async def search_playlists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[
@@ -289,8 +297,9 @@ class Client:
 		:return: List[:class:`SimplePlaylist`]
 		'''
 
-		results = await self.search('playlist', q=q, market=market, limit=limit, offset=offset,
-			include_external=include_external)
+		results = await self.search(
+			'playlist', q=q, market=market, limit=limit, offset=offset, include_external=include_external
+		)
 		return results['playlists']
 
 	async def search_track(self, q=None) -> SimpleTrack:
@@ -399,7 +408,7 @@ class Client:
 
 		return artists
 
-	async def get_user(self, user_id) -> Optional[PublicUser]:
+	async def get_user(self, user_id) -> PublicUser:
 		'''
 		Get a user.
 
@@ -407,10 +416,7 @@ class Client:
 		:return: A :class:`PublicUser` instance.
 		'''
 
-		try:
-			data = await self.http.get_user(user_id)
-		except NotFound:
-			return None
+		data = await self.http.get_user(user_id)
 
 		return PublicUser(self, data)
 
@@ -481,7 +487,7 @@ class Client:
 		for chunk in subslice(uris, 100):
 			await self.http.playlist_add_tracks(playlist, uris=chunk, position=position)
 
-	async def get_playlist(self, playlist_id) -> Optional[FullPlaylist]:
+	async def get_playlist(self, playlist_id) -> FullPlaylist:
 		'''
 		Get a pre-existing playlist.
 
@@ -489,10 +495,7 @@ class Client:
 		:return: :class:`FullPlaylist` instance.
 		'''
 
-		try:
-			data = await self.http.get_playlist(playlist_id)
-		except NotFound:
-			return None
+		data = await self.http.get_playlist(playlist_id)
 
 		playlist = FullPlaylist(self, data)
 		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, data.pop('tracks')))
@@ -537,15 +540,13 @@ class Client:
 				playlists.append(None)
 			else:
 				playlist = SimplePlaylist(self, playlist_obj)
-				await playlist._fill_tracks(
-					PlaylistTrack,
-					Pager(self.http, await self.http.get_playlist_tracks(playlist.id))
-				)
+				pager = Pager(self.http, await self.http.get_playlist_tracks(playlist.id))
+				await playlist._fill_tracks(PlaylistTrack, pager)
 				playlists.append(playlist)
 
 		return playlists
 
-	async def get_track(self, track_id) -> Optional[FullTrack]:
+	async def get_track(self, track_id) -> FullTrack:
 		'''
 		Get a track.
 
@@ -553,11 +554,7 @@ class Client:
 		:return: :class:`FullTrack` instance.
 		'''
 
-		try:
-			data = await self.http.get_track(track_id)
-		except NotFound:
-			return None
-
+		data = await self.http.get_track(track_id)
 		return FullTrack(self, data)
 
 	async def get_tracks(self, *track_ids) -> List[FullTrack]:
@@ -581,7 +578,7 @@ class Client:
 
 		return tracks
 
-	async def get_audio_features(self, track) -> Optional[AudioFeatures]:
+	async def get_audio_features(self, track) -> AudioFeatures:
 		'''
 		Get 'Audio Features' of a track.
 
@@ -591,14 +588,11 @@ class Client:
 
 		track = get_id(track)
 
-		try:
-			data = await self.http.get_audio_features(track)
-		except NotFound:
-			return None
+		data = await self.http.get_audio_features(track)
 
 		return AudioFeatures(self, data)
 
-	async def get_artist(self, artist_id) -> Optional[FullArtist]:
+	async def get_artist(self, artist_id) -> FullArtist:
 		'''
 		Get an artist.
 
@@ -606,17 +600,18 @@ class Client:
 		:return: :class:`FullArtist` instance.
 		'''
 
-		try:
-			data = await self.http.get_artist(artist_id)
-		except NotFound:
-			return None
+		data = await self.http.get_artist(artist_id)
 
 		return FullArtist(self, data)
 
-	async def get_artist_albums(self, artist_id, include_groups=None, country=None, limit=None, offset=None) -> List[
-		SimpleAlbum]:
+	async def get_artist_albums(self, artist_id, include_groups=None, country=None, limit=None, offset=None) -> List[SimpleAlbum]:
 		'''
-		Get an artist's albums
+		Get an artist's albums.
+
+		.. note::
+		   This endpoint does *not* return the track objects for each album. If you need those, you have to
+		   fetch them manually afterwards.
+
 		:param str artist_id: Spotify ID of artist.
 		:param int limit: How many albums to return.
 		:param kwargs: other query params for this method
@@ -625,14 +620,11 @@ class Client:
 
 		albums = []
 
-		try:
-			data = await self.http.get_artist_albums(
-				artist_id, include_groups=include_groups, country=country, limit=max(limit, 50), offset=offset
-			)
-		except NotFound:
-			return albums
+		data = await self.http.get_artist_albums(
+			artist_id, include_groups=include_groups, country=country, limit=limit, offset=offset
+		)
 
-		async for album_obj in Pager(self.http, data, limit):
+		async for album_obj in Pager(self.http, data):
 			albums.append(SimpleAlbum(self, album_obj))
 
 		return albums
@@ -658,16 +650,17 @@ class Client:
 
 		return artists
 
-	async def get_artist_top_tracks(self, artist, market='from_token') -> List[FullTrack]:
+	async def get_artist_top_tracks(self, artist, market=None) -> List[FullTrack]:
 		'''
 		Returns the top tracks for an artist.
 
 		:param artist: :class:`Artist` instance or Spotify ID.
-		:param market: Market to find tracks for.
+		:param market: ISO-3166_1_ country code. Leave blank to let the library auto-resolve this.
 		:return: A list of maximum 10 :class:`FullTrack` instances.
 		'''
 
 		artist_id = get_id(artist)
+		market = self._ensure_market(market)
 
 		data = await self.http.get_artist_top_tracks(artist_id, market=market)
 
@@ -697,19 +690,16 @@ class Client:
 
 		return artists
 
-	async def get_album(self, album_id, **kwargs) -> Optional[FullAlbum]:
+	async def get_album(self, album_id, market=None) -> FullAlbum:
 		'''
 		Get an album.
 
 		:param str album_id: Spotify ID of album.
-		:param kwargs: other query params for this method
+		:param market: ISO-3166-1_ country code.
 		:return: :class:`FullAlbum` instance.
 		'''
 
-		try:
-			data = await self.http.get_album(album_id, **kwargs)
-		except NotFound:
-			return None
+		data = await self.http.get_album(album_id, market=market)
 
 		album = FullAlbum(self, data)
 		await album._fill_tracks(SimpleTrack, Pager(self.http, data['tracks']))
@@ -721,7 +711,7 @@ class Client:
 		Get several albums.
 
 		:param str album_ids: Spotify ID of album.
-		:param kwargs: other query params for this method
+		:param market: ISO-3166-1_ country code.
 		:return: List[:class:`FullAlbum`]
 		'''
 
@@ -740,18 +730,20 @@ class Client:
 
 		return albums
 
-	async def get_album_tracks(self, album, **kwargs) -> List[SimpleTrack]:
+	async def get_album_tracks(self, album, limit=None, offset=None, market=None) -> List[SimpleTrack]:
 		'''
 		Get tracks from an album.
 
 		:param album: :class:`Album` or Spotify ID of album.
-		:param kwargs: other query params for this method
+		:param limit: How many tracks to fetch.
+		:param offset: What pagination offset to start from.
+		:param market: ISO-3166-1_ country code.
 		:return: List[:class:`SimpleTrack`]
 		'''
 
 		album = get_id(album)
 
-		data = await self.http.get_album_tracks(album, **kwargs)
+		data = await self.http.get_album_tracks(album, limit=limit, offset=offset, market=market)
 
 		tracks = []
 
@@ -766,6 +758,7 @@ class Client:
 
 		:param str type: The ID type: currently only artist is supported.
 		:param int limit: The maximum number of items to return. Default - infinity
+		:param after: What artist ID to start the fetching from.
 		:return: List[:class:`SimpleArtist`]
 		'''
 

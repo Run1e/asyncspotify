@@ -27,7 +27,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 		'''
 		Check if track is available in a market.
 
-		:param market: ISO-3166_ value.
+		:param market: ISO-3166-1_ value.
 		:return:
 		'''
 		return market in self.available_markets
@@ -62,7 +62,7 @@ class SimpleTrack(_BaseTrack):
 	type: str
 		Plaintext string of object type: ``track``.
 	available_markets: List[str] or None
-		Markets where the album is available in ISO-3166_ form.
+		Markets where the album is available in ISO-3166-1_ form.
 	disc_number: int
 		What disc the track appears on. Usually ``1`` unless there are several discs in the album.
 	duration: `timedelta <https://docs.python.org/3/library/datetime.html#timedelta-objects>`_

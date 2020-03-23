@@ -36,8 +36,12 @@ class Authenticator:
 	@property
 	def client(self):
 		if self._client is None:
-			raise ValueError('Client not set for authorizer yet.')
+			raise ValueError('Client not set for authenticator yet.')
 		return self._client
+
+	@property
+	def market(self):
+		raise RuntimeError('This authenticator does not ensure a market.')
 
 	async def authorize(self):
 		raise NotImplementedError
@@ -59,6 +63,10 @@ class AuthorizationCodeFlow(Authenticator, RefreshableMixin):
 		self.redirect_uri = redirect_uri
 		self.response_class = response_class
 		self.refresh_task = None
+
+	@property
+	def market(self):
+		return 'from_token'
 
 	async def token(self):
 		if self._data is None:
@@ -194,6 +202,11 @@ class ClientCredentialsFlow(Authenticator, RefreshableMixin):
 
 	You can only access public resources using this authenticator.
 	'''
+
+	@property
+	def market(self):
+		# TODO: ??? does this make sense to do? I have no idea.
+		return 'US'
 
 	async def authorize(self):
 		'''Authorize using this authenticator.'''

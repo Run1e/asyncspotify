@@ -6,10 +6,10 @@ log = logging.getLogger(__name__)
 
 
 class Pager:
-	def __init__(self, http, pager_object, stop_after=None):
+	def __init__(self, http, pager_object, self_limit=None):
 		self.http = http
 		self.pos = 0
-		self.stop_after = stop_after
+		self.self_limit = self_limit
 		self.set_next(pager_object)
 
 	def set_next(self, obj):
@@ -28,11 +28,11 @@ class Pager:
 		return self
 
 	async def __anext__(self):
-		# stop if we hit the pager total
-		if self.pos >= self.total:
+		# stop if we hit the pager total or the specified pager limit
+		if self.pos >= self.total or self.pos >= self.limit:
 			raise StopAsyncIteration
 
-		if self.stop_after is not None and self.pos >= self.stop_after:
+		if self.self_limit is not None and self.pos >= self.self_limit:
 			raise StopAsyncIteration
 
 		# get the next page if we're exhausted this one
@@ -45,9 +45,9 @@ class Pager:
 
 
 class SearchPager(Pager):
-	def __init__(self, http, obj, type, stop_after=None):
+	def __init__(self, http, obj, type, self_limit=None):
 		self.type = type
-		super().__init__(http, obj, stop_after)
+		super().__init__(http, obj, self_limit)
 
 	def set_next(self, obj):
 		obj = obj[self.type]

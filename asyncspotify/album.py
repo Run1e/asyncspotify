@@ -56,7 +56,7 @@ class SimpleAlbum(_BaseAlbum):
 	album_type:
 		Type of album, e.g. ``album``, ``single`` or ``compilation``.
 	available_markets: List[str] or None
-		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
+		Markets where the album is available: ISO-3166-1_.
 	external_urls: dict
 		Dictionary that maps type to url.
 	release_date: `datetime <https://docs.python.org/3/library/datetime.html#module-datetime>`_
