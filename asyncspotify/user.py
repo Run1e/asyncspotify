@@ -57,7 +57,7 @@ class PrivateUser(_BaseUser):
 	country: str
 		ISO-3166_ code of users country.
 	email: str
-		Email of user. Please do not this email is not necessarily verified by Spotify.
+		Email of user. Please do not this email is note necessarily verified by Spotify.
 	product: str
 		Users Spotify subscription level, could be ``free``, ``open`` or ``premium``. ``free`` and ``open`` are synonyms.
 	'''
