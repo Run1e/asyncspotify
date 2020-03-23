@@ -1,7 +1,7 @@
-from .object import Object
+from .object import SpotifyObject
 
 
-class Device(Object):
+class Device(SpotifyObject):
 	'''
 	Represents a Device object.
 

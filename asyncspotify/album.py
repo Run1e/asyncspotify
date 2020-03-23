@@ -1,15 +1,19 @@
 from datetime import datetime
 
 from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin, ImageMixin, TrackMixin
-from .object import Object
+from .object import SpotifyObject
 
 
-class _BaseAlbum(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
+class _BaseAlbum(SpotifyObject, TrackMixin, ImageMixin, ExternalURLMixin, ArtistMixin):
 	_type = 'album'
 	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
+
+		ExternalURLMixin.__init__(self, data)
+		ArtistMixin.__init__(self, data)
+		ImageMixin.__init__(self, data)
 
 		self.album_group = data.pop('album_group', None)  # can be None, though this is not specified in the API docs
 		self.album_type = data.pop('album_type')
@@ -27,10 +31,6 @@ class _BaseAlbum(Object, ExternalURLMixin, TrackMixin, ImageMixin, ArtistMixin):
 				)
 			except ValueError:
 				self.release_date = None
-
-		self._fill_external_urls(data.pop('external_urls'))
-		self._fill_artists(data.pop('artists'))
-		self._fill_images(data.pop('images'))
 
 
 class SimpleAlbum(_BaseAlbum):
@@ -89,9 +89,9 @@ class FullAlbum(_BaseAlbum, ExternalIDMixin):
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
+		ExternalIDMixin.__init__(self, data)
+
 		self.genres = data.pop('genres')
 		self.label = data.pop('label')
 		self.popularity = data.pop('popularity')
 		self.copyrights = data.pop('copyrights')
-
-		self._fill_external_ids(data.pop('external_ids'))

@@ -28,9 +28,9 @@ class SpotifyObject:
 		return self._type
 
 	def __repr__(self):
-		repr_str = self.__class__.__name__
-		if self.id:
-			repr_str += ' id=\'{}\''.format(self.id)
-		if self.name:
-			repr_str += ' name=\'{}\''.format(self.name)
-		return '<{}>'.format(repr_str)
+		repr = self.__class__.__name__
+		if self.id is not None:
+			repr += ' id=\'{}\''.format(self.id)
+		if self.name is not None:
+			repr += ' name=\'{}\''.format(self.name)
+		return '<%s>' % repr

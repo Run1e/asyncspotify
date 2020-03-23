@@ -2,14 +2,17 @@ from datetime import datetime, timedelta
 
 from .album import SimpleAlbum
 from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
-from .object import Object
+from .object import SpotifyObject
 
 
-class _BaseTrack(Object, ExternalURLMixin, ArtistMixin):
+class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 	_type = 'track'
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
+
+		ExternalURLMixin.__init__(self, data)
+		ArtistMixin.__init__(self, data)
 
 		self.available_markets = data.pop('available_markets', None)
 		self.disc_number = data.pop('disc_number')
@@ -20,10 +23,13 @@ class _BaseTrack(Object, ExternalURLMixin, ArtistMixin):
 
 		self.duration = timedelta(milliseconds=data.pop('duration_ms'))
 
-		self._fill_external_urls(data.pop('external_urls'))
-		self._fill_artists(data.pop('artists'))
-
 	def avaliable_in(self, market):
+		'''
+		Check if track is available in a market.
+
+		:param market: ISO-3166_ value.
+		:return:
+		'''
 		return market in self.available_markets
 
 	async def get_features(self):
@@ -56,7 +62,7 @@ class SimpleTrack(_BaseTrack):
 	type: str
 		Plaintext string of object type: ``track``.
 	available_markets: List[str] or None
-		Markets where the album is available: `ISO_3166-1 <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`_.
+		Markets where the album is available in ISO-3166_ form.
 	disc_number: int
 		What disc the track appears on. Usually ``1`` unless there are several discs in the album.
 	duration: `timedelta <https://docs.python.org/3/library/datetime.html#timedelta-objects>`_
@@ -97,9 +103,9 @@ class FullTrack(_BaseTrack, ExternalIDMixin):
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
-		self.popularity = data.pop('popularity')
-		self._fill_external_ids(data.pop('external_ids'))
+		ExternalIDMixin.__init__(self, data)
 
+		self.popularity = data.pop('popularity')
 		self.album = SimpleAlbum(client, data.pop('album'))
 
 
@@ -117,5 +123,6 @@ class PlaylistTrack(FullTrack):
 
 	def __init__(self, client, data):
 		super().__init__(client, data.pop('track'))
+
 		self.added_at = datetime.strptime(data.pop('added_at'), "%Y-%m-%dT%H:%M:%SZ")
 		self.added_by = data.pop('added_by')

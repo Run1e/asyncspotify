@@ -1,26 +1,21 @@
 from .mixins import ExternalURLMixin, ImageMixin
-from .object import Object
+from .object import SpotifyObject
 
 
-class _BaseUser(Object, ExternalURLMixin, ImageMixin):
+class _BaseUser(SpotifyObject, ExternalURLMixin, ImageMixin):
 	_type = 'user'
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
+
+		ExternalURLMixin.__init__(self, data)
+		ImageMixin.__init__(self, data)
 
 		self.display_name = data.pop('display_name')
 		self.name = self.display_name
 
 		followers = data.get('followers', None)
 		self.follower_count = None if followers is None else followers['total']
-
-		self._fill_external_urls(data.pop('external_urls'))
-
-		images = data.pop('images', None)
-		if images is None:
-			self.images = []
-		else:
-			self._fill_images(images)
 
 	async def playlists(self):
 		'''

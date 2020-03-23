@@ -1,14 +1,14 @@
 from .mixins import ExternalURLMixin, ImageMixin
-from .object import Object
+from .object import SpotifyObject
 
 
-class _BaseArtist(Object, ExternalURLMixin):
+class _BaseArtist(SpotifyObject, ExternalURLMixin):
 	_type = 'artist'
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
-		self._fill_external_urls(data.pop('external_urls'))
+		ExternalURLMixin.__init__(self, data)
 
 	async def top_tracks(self, market='from_token'):
 		'''
@@ -80,9 +80,9 @@ class FullArtist(_BaseArtist, ImageMixin):
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
+		
+		ImageMixin.__init__(self, data)
 
 		self.follower_count = data['followers']['total']
 		self.genres = data.pop('genres')
 		self.popularity = data.pop('popularity')
-
-		self._fill_images(data.pop('images'))

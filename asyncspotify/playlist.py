@@ -1,22 +1,22 @@
-from .mixins import ExternalURLMixin, ImageMixin, TrackMixin, UserMixin
-from .object import Object
+from .mixins import ExternalURLMixin, ImageMixin, TrackMixin
+from .object import SpotifyObject
 from .user import PublicUser
 
 
-class _BasePlaylist(Object, ExternalURLMixin, TrackMixin, ImageMixin, UserMixin):
+class _BasePlaylist(SpotifyObject, TrackMixin, ExternalURLMixin, ImageMixin):
 	_type = 'playlist'
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
+		
+		ExternalURLMixin.__init__(self, data)
+		ImageMixin.__init__(self, data)
 
 		self.snapshot_id = data.pop('snapshot_id')
 		self.collaborative = data.pop('collaborative')
 		self.public = data.pop('public')
 
 		self.owner = PublicUser(client, data.pop('owner'))
-
-		self._fill_external_urls(data.pop('external_urls'))
-		self._fill_images(data.pop('images'))
 
 	async def edit(self, name=None, public=None, collaborative=None, description=None):
 		'''

@@ -1,9 +1,9 @@
 from datetime import timedelta
 
-from .object import Object
+from .object import SpotifyObject
 
 
-class AudioFeatures(Object):
+class AudioFeatures(SpotifyObject):
 	_type = 'audio_features'
 
 	def __init__(self, client, data):

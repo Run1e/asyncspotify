@@ -9,7 +9,7 @@ from .device import Device
 from .exceptions import NotFound, SpotifyException
 from .http import HTTP
 from .oauth.flows import Authenticator
-from .object import Object
+from .object import SpotifyObject
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def get_id(obj):
-	if isinstance(obj, Object):
+	if isinstance(obj, SpotifyObject):
 		return obj.id
 	else:
 		return obj

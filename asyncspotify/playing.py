@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 
 from .device import Device
-from .object import Object
+from .object import SpotifyObject
 from .track import FullTrack
 
 
-class CurrentlyPlaying(Object):
+class CurrentlyPlaying(SpotifyObject):
 	'''
 	Represents a Currently Playing object.
 
@@ -28,11 +28,8 @@ class CurrentlyPlaying(Object):
 		self.progress = timedelta(milliseconds=data.pop('progress_ms'))
 		self.is_playing = data.pop('is_playing')
 
-		trck = data.pop('item')
-		if trck is not None:
-			self.track = FullTrack(client, trck)
-		else:
-			self.track = None
+		item = data.pop('item', None)
+		self.track = None if item is None else FullTrack(client, item)
 
 		self.currently_playing_type = data.pop('currently_playing_type')
 

@@ -1,15 +1,16 @@
 import logging
 
 from .image import Image
-from .object import Object
+from .object import SpotifyObject
 
 log = logging.getLogger(__name__)
 
 
 class ArtistMixin:
-	def _fill_artists(self, artists):
+	def __init__(self, data):
 		from .artist import SimpleArtist
 
+		artists = data.pop('artists')
 		self.artists = []
 
 		for art in artists:
@@ -17,22 +18,27 @@ class ArtistMixin:
 
 
 class ImageMixin:
-	def _fill_images(self, images):
+	def __init__(self, data):
+		images = data.pop('images', None)
 		self.images = []
 
-		for img in images:
-			self.images.append(Image(img))
+		if images is not None:
+			for img in images:
+				self.images.append(Image(img))
 
 
 class ExternalIDMixin:
-	def _fill_external_ids(self, external_ids):
+	def __init__(self, data):
+		external_ids = data.pop('external_ids')
 		self.external_ids = {}
+
 		for key, value in external_ids.items():
 			self.external_ids[key] = value
 
 
 class ExternalURLMixin:
-	def _fill_external_urls(self, external_urls):
+	def __init__(self, data):
+		external_urls = data.pop('external_urls')
 		self.urls = {}
 
 		self.link = external_urls.pop('spotify', None)
@@ -41,10 +47,9 @@ class ExternalURLMixin:
 
 
 class TrackMixin:
-
 	@property
 	def has_track(self, track):
-		if isinstance(track, Object):
+		if isinstance(track, SpotifyObject):
 			track = track.id
 		return any(track == t.id for t in self.tracks)
 
@@ -58,8 +63,3 @@ class TrackMixin:
 				continue
 
 			self.tracks.append(object_type(self._client, obj))
-
-
-class UserMixin:
-	async def _get_user(self):
-		pass
