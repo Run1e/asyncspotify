@@ -45,7 +45,6 @@ class HTTP:
 		await self.session.close()
 
 	async def request(self, route, data=None, json=None, headers=None, authorize=True):
-
 		if authorize:
 			auth_header = self.client.auth.header
 			if auth_header is None:

@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from ..http import Route
+from ..exceptions import HTTPException
 
 log = logging.getLogger(__name__)
 
@@ -55,10 +56,23 @@ class RefreshableFlowMixin:
 			await asyncio.sleep(seconds)
 			log.debug('Refreshing access token now', seconds)
 
-		await self.refresh(start_task=False)
-		self.refresh_in(self._data.seconds_until_expire(), cancel_task=False)
+		# TODO: this back-off thing is pretty eh
+		# it's not really even backing off
+		# maybe also do a check to see whether the data is *actually* updated?
+		try:
+			await self.refresh(start_task=False)
+		except HTTPException as e:
+			log.critical(e, exc_info=True)
+			next_attempt = 5.0
+		else:
+			next_attempt = self._data.seconds_until_expire()
+
+		self.refresh_in(next_attempt, cancel_task=False)
 
 	async def close(self):
 		if self._task is not None:
 			self._task.cancel()
-			await self._task
+			try:
+				await self._task
+			except asyncio.CancelledError:
+				pass

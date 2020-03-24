@@ -254,6 +254,3 @@ class TestClient:
 
 		with raises(BadRequest):
 			await sp.get_artist_albums(bad_id)
-
-	async def test_other(self, sp: Client):
-		assert sp.auth.client_id == CLIENT_ID

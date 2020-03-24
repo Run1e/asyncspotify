@@ -147,16 +147,30 @@ class AuthorizationCodeFlow(Authenticator, RefreshableFlowMixin):
 		# get response class, pass it to .store
 		if data is None:
 			data = await self.setup()
-			await self.store(data)
+
+			if isinstance(data, AuthenticationResponse):
+				await self.store(data)
+
+		if not isinstance(data, AuthenticationResponse):
+			raise TypeError('setup() has to return an AuthenticationResponse')
 
 		self._data = data
 
 		# refresh it now if it's expired
-		if self._data.seconds_until_expire() < 0:
+		if self._data.is_expired():
 			await self.refresh(start_task=True)
 		else:
 			# manually start refresh task if we didn't refresh on startup
 			self.refresh_in(self._data.seconds_until_expire())
+
+	async def setup(self):
+		raise NotImplementedError
+
+	async def store(self, response):
+		raise NotImplementedError
+
+	async def load(self):
+		raise NotImplementedError
 
 	def create_authorize_route(self):
 		'''Craft the :class:`Route` for the user to use for authorizing the client.'''
@@ -179,11 +193,11 @@ class AuthorizationCodeFlow(Authenticator, RefreshableFlowMixin):
 		query = parsed.query
 
 		if not query:
-			raise self.PARSE_ERROR
+			raise ValueError('Unable to parse that redirect url')
 
 		qs = parse_qs(query)
 		if 'code' not in qs:
-			raise self.PARSE_ERROR
+			raise ValueError('Redirect url seems to be missing code fragment')
 
 		return qs['code'][0]
 
