@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to asyncspotify's documentation!
-==================================
+========================================
 
 asyncspotify is an asynchronous, object-oriented wrapper for the Spotify Web API.
 

@@ -1,2 +1,6 @@
-from .flows import AuthorizationCodeFlow, ClientCredentialsFlow, EasyCodeFlow
-from .mixins import RefreshableMixin
+from .flows import (
+	AuthorizationCodeFlow,
+	EasyAuthorizationCodeFlow,
+	ClientCredentialsFlow,
+)
+from .mixins import RefreshableFlowMixin

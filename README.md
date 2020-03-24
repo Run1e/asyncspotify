@@ -5,7 +5,7 @@
 asyncspotify is an asynchronous, object-oriented python wrapper for the Spotify Web API.
 
 ### Installation
-Simply install it from PyPi using pip!
+Simply install it from PyPI using pip!
 ```
 pip install asyncspotify
 ```

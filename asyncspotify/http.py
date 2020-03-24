@@ -41,7 +41,7 @@ class HTTP:
 		self.session = ClientSession(loop=loop or asyncio.get_event_loop())
 		self.lock = Lock()
 
-	async def close_session(self):
+	async def close(self):
 		await self.session.close()
 
 	async def request(self, route, data=None, json=None, headers=None, authorize=True):

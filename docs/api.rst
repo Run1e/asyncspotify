@@ -116,8 +116,8 @@ A guide on how authentication works is located `here <https://developer.spotify.
 Examples can also be found under the quickstart guide.
 
 .. note::
-   You do not have to worry about when your access token expires. The library will refresh the tokens automatically.
-   Unless you're rolling your own authenticator. If you're doing that I assume you know what you're doing.
+   You do not have to worry about when your access token expires as the library will refresh the tokens automatically.
+   Unless you're rolling your own authenticator, obviously.
 
 ClientCredentialsFlow
 ---------------------
@@ -128,20 +128,20 @@ is used here. To extend, it simply authorizes again.
 .. autoclass:: ClientCredentialsFlow
    :members:
 
-EasyCodeFlow
-------------
+EasyAuthorizationCodeFlow
+-------------------------
 
-Extends :class:`AuthorizationCodeFlow` and requires one extra argument, ``store``, which tells the authenticator where
-to store tokens.
+Extends :class:`AuthorizationCodeFlow` and requires one extra argument, ``storage``, which tells the authenticator which
+file to store tokens in.
 
-.. autoclass:: EasyCodeFlow
+.. autoclass:: EasyAuthorizationCodeFlow
    :members:
 
 AuthorizationCodeFlow
 ---------------------
 
-Requires a client id and secret, in addition to a scope you want to authenticate for. When the access token expires
-a new one if fetched for you.
+Exposes helper methods for implementing a version of the Authorization Code flow. :class:`EasyAuthorizationCodeFlow`
+inherits from this and is recommended for most if access to private resources is required.
 
 .. autoclass:: AuthorizationCodeFlow
     :members:

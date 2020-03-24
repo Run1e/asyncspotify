@@ -11,4 +11,5 @@ asd.py
 test.py
 config.py
 tokens.json
+secret.json
 asyncspotify.egg-info

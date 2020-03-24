@@ -8,6 +8,8 @@ from pytest import fixture, mark, raises
 from asyncspotify import *
 from config import *
 
+from pytest import fixture, mark, raises
+
 User = namedtuple('User', 'id name')
 Playlist = namedtuple('Playlist', 'id ownerid')
 
@@ -248,7 +250,6 @@ class TestClient:
 
 		for album in albums:
 			assert isinstance(album, SimpleAlbum)
-
 			assert not hasattr(album, 'tracks')
 
 		with raises(BadRequest):

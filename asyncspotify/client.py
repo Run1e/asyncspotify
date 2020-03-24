@@ -8,7 +8,7 @@ from .audiofeatures import AudioFeatures
 from .device import Device
 from .exceptions import *
 from .http import HTTP
-from .oauth.flows import Authenticator, RefreshableMixin
+from .oauth.flows import Authenticator, RefreshableFlowMixin
 from .object import SpotifyObject
 from .pager import CursorBasedPaging, Pager, SearchPager
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
@@ -59,19 +59,22 @@ class Client:
 
 	async def authorize(self):
 		'''Tell the authenticator to authorize this client.'''
+
 		await self.auth.authorize()
 
 	async def refresh(self):
 		'''Tell the authenticator to refresh this client, if applicable.'''
+
+		if not isinstance(self.auth, RefreshableFlowMixin):
+			raise TypeError('Authenticator does not support refreshing.')
+
 		await self.auth.refresh()
 
 	async def close(self):
 		'''Close this client session.'''
 
-		if isinstance(self.auth, RefreshableMixin):
-			self.auth._task.cancel()
-
-		await self.http.close_session()
+		await self.auth.close()
+		await self.http.close()
 
 	def _ensure_market(self, market):
 		return self.auth.market if market is None else market

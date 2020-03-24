@@ -16,8 +16,9 @@ from .audiofeatures import AudioFeatures
 from .client import Client
 from .device import Device
 from .exceptions import *
+from .http import Route
 from .image import Image
-from .oauth import AuthorizationCodeFlow, ClientCredentialsFlow, EasyCodeFlow
+from .oauth import AuthorizationCodeFlow, ClientCredentialsFlow, EasyAuthorizationCodeFlow
 from .object import SpotifyObject
 from .playing import CurrentlyPlaying, CurrentlyPlayingContext
 from .playlist import FullPlaylist, SimplePlaylist
