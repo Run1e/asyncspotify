@@ -7,7 +7,6 @@ _static
 _templates
 dist
 venv
-asd.py
 test.py
 config.py
 tokens.json

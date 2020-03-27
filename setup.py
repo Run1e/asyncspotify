@@ -1,6 +1,6 @@
 import setuptools
 
-with open('README.md', 'r') as fh:
+with open('README.rst', 'r') as fh:
     long_description = fh.read()
 
 with open('requirements.txt', 'r') as f:
@@ -13,7 +13,7 @@ setuptools.setup(
     author_email="runar-borge@hotmail.com",
     description="Spotify Web API implementation that is fully asynchronous and object-oriented.",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     keywords='spotify async aio asyncio api webapi',
     install_requires=install_requires,
     url="https://github.com/Run1e/asyncspotify",
