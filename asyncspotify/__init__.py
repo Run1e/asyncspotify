@@ -12,6 +12,7 @@ import logging
 from . import utils
 from .album import FullAlbum, SimpleAlbum
 from .artist import FullArtist, SimpleArtist
+from .audioanalysis import AudioAnalysis
 from .audiofeatures import AudioFeatures
 from .client import Client
 from .device import Device

@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from .album import SimpleAlbum
 from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
 from .object import SpotifyObject
+from .audioanalysis import AudioAnalysis
+from .audiofeatures import AudioFeatures
 
 
 class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
@@ -32,7 +34,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 		'''
 		return market in self.available_markets
 
-	async def audio_features(self):
+	async def audio_features(self) -> AudioFeatures:
 		'''
 		Get 'Audio Features' of the track.
 		
@@ -42,7 +44,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 
 		return await self._client.get_audio_features(self.id)
 		
-	async def audio_analysis(self):
+	async def audio_analysis(self) -> AudioAnalysis:
 		'''
 		Get 'Audio Analysis' of the track.
 		

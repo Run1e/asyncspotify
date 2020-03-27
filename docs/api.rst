@@ -84,6 +84,16 @@ Album
 .. autoclass:: FullAlbum
    :members:
 
+Audio Features
+--------------
+
+.. autoclass:: AudioFeatures
+
+Audio Analysis
+--------------
+
+.. autoclass:: AudioAnalysis
+
 User
 ----
 
