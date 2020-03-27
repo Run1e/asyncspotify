@@ -242,6 +242,10 @@ class HTTP:
 		r = Route('GET', 'audio-features/{0}'.format(track_id))
 		return await self.request(r)
 
+	async def get_audio_analysis(self, track_id):
+		r = Route('GET', 'audio-analysis/{0}'.format(track_id))
+		return await self.request(r)
+
 	async def get_artist(self, artist_id):
 		r = Route('GET', 'artists/{0}'.format(artist_id))
 		return await self.request(r)
