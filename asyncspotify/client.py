@@ -596,7 +596,7 @@ class Client:
 
 		return AudioFeatures(self, data)
 
-	async def get_audio_analysis(self, track) -> Optional[AudioAnalysis]:
+	async def get_audio_analysis(self, track) -> AudioAnalysis:
 		'''
 		Get 'Audio Analysis' of a track.
 
@@ -606,14 +606,11 @@ class Client:
 
 		track = get_id(track)
 
-		try:
-			data = await self.http.get_audio_analysis(track)
-		except NotFound:
-			return None
+		data = await self.http.get_audio_analysis(track)
 
 		return AudioAnalysis(self, data)
 
-	async def get_artist(self, artist_id) -> Optional[FullArtist]:
+	async def get_artist(self, artist_id) -> FullArtist:
 		'''
 		Get an artist.
 
