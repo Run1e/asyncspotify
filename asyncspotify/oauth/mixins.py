@@ -71,8 +71,8 @@ class RefreshableFlowMixin:
 
 	async def close(self):
 		if self._task is not None:
-			self._task.cancel()
 			try:
+				self._task.cancel()
 				await self._task
 			except asyncio.CancelledError:
 				pass
