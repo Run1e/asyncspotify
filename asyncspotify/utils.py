@@ -45,28 +45,3 @@ def subslice(iter, step):
 
 	if group:
 		yield group
-
-def convertToTimeDelta(data, listOfFieldsToConvert):
-	'''
-	Function to convert fields into timedelta objects
-
-	:parm data: Dictionary containing lists of dicts or dicts or a mix of both
-	:parm listOfFieldsToConvert: List of the fields that need to be converted into time delta objects 
-	'''
-	# Loop through primary keys in data
-	for item in data:
-		# Applies to all the primary keys except track. These only have start and duration keys so this might be able to be simplified
-		if type(data[item]) == list:
-			for field in listOfFieldsToConvert:
-				# Check if the field exists in the list
-				if data[item][0].get(field, None) != None:
-					# Loop through each item in list, setting the field to a timedelta object
-					for i in data[item]:
-						i[field] = timedelta(seconds=i[field])
-		elif type(data[item]) == dict:
-			# Ignore the meta field
-			if item != 'meta':
-				for field in listOfFieldsToConvert:
-					if data[item].get(field, None) != None:
-						data[item][field] = timedelta(seconds=data[item][field])
-	return data

@@ -38,12 +38,11 @@ class _BaseTrack(Object, ExternalURLMixin, ArtistMixin):
 		
 	async def get_audio_analysis(self):
 		'''
-		Get 'Audio Features' of the track.
+		Get 'Audio Analysis' of the track.
 		
 		:param track: :class:`Track` instance or Spotify ID of track.
-		:return: :class:`AudioFeatures`
+		:return: :class:`AudioAnalysis`
 		'''
-
 		return await self._client.get_audio_analysis(self.id)
 
 class SimpleTrack(_BaseTrack):
