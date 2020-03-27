@@ -32,7 +32,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 		'''
 		return market in self.available_markets
 
-	async def get_features(self):
+	async def audio_features(self):
 		'''
 		Get 'Audio Features' of the track.
 		
@@ -42,7 +42,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 
 		return await self._client.get_audio_features(self.id)
 		
-	async def get_audio_analysis(self):
+	async def audio_analysis(self):
 		'''
 		Get 'Audio Analysis' of the track.
 		

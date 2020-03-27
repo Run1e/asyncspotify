@@ -584,7 +584,7 @@ class Client:
 
 	async def get_audio_features(self, track) -> AudioFeatures:
 		'''
-		Get 'Audio Features' of a track.
+		Get Audio Features of a track.
 
 		:param track: :class:`Track` instance or Spotify ID.
 		:return: :class:`AudioFeatures`
@@ -598,7 +598,7 @@ class Client:
 
 	async def get_audio_analysis(self, track) -> AudioAnalysis:
 		'''
-		Get 'Audio Analysis' of a track.
+		Get Audio Analysis of a track.
 
 		:param track: :class:`Track` instance or Spotify ID.
 		:return: :class:`AudioAnalysis`
