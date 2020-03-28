@@ -56,7 +56,7 @@ class AuthorizationCodeFlowResponse(AuthenticationResponse):
 
 	@classmethod
 	def from_data(cls, data):
-		self = cls(data)
+		self = super().from_data(data)
 		self.scope = data.get('scope')
 		self.refresh_token = data.get('refresh_token') # however should never be None from a stored copy
 		return self
