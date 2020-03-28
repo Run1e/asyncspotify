@@ -50,6 +50,7 @@ Track
 
 .. autoclass:: SimpleTrack
    :members:
+   :inherited-members:
 
 .. autoclass:: FullTrack
    :members:
@@ -62,6 +63,7 @@ Artist
 
 .. autoclass:: SimpleArtist
    :members:
+   :inherited-members:
 
 .. autoclass:: FullArtist
    :members:
@@ -71,6 +73,7 @@ Playlist
 
 .. autoclass:: SimplePlaylist
    :members:
+   :inherited-members:
 
 .. autoclass:: FullPlaylist
    :members:
@@ -80,6 +83,7 @@ Album
 
 .. autoclass:: SimpleAlbum
    :members:
+   :inherited-members:
 
 .. autoclass:: FullAlbum
    :members:
@@ -94,14 +98,21 @@ Audio Analysis
 
 .. autoclass:: AudioAnalysis
 
+Image
+-----
+
+.. autoclass:: Image
+
 User
 ----
 
 .. autoclass:: PublicUser
    :members:
+   :inherited-members:
 
 .. autoclass:: PrivateUser
    :members:
+   :inherited-members:
 
 Playing Objects
 ---------------
@@ -137,6 +148,7 @@ is used here. To extend, it simply authorizes again.
 
 .. autoclass:: ClientCredentialsFlow
    :members:
+   :inherited-members:
 
 EasyAuthorizationCodeFlow
 -------------------------
@@ -146,6 +158,7 @@ file to store tokens in.
 
 .. autoclass:: EasyAuthorizationCodeFlow
    :members:
+   :inherited-members:
 
 AuthorizationCodeFlow
 ---------------------
@@ -154,7 +167,8 @@ Exposes helper methods for implementing a version of the Authorization Code flow
 inherits from this and is recommended for most if access to private resources is required.
 
 .. autoclass:: AuthorizationCodeFlow
-    :members:
+   :members:
+   :inherited-members:
 
 Scope
 =====
@@ -170,6 +184,7 @@ You can create a scope with specific permissions by passing kwargs in, like:
 
 .. autoclass:: Scope
    :members:
+   :inherited-members:
 
    .. method:: all()
 
