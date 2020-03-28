@@ -2,7 +2,7 @@
 playlist = await sp.get_playlist('1wPvaRtuI8mt10CpP2KnlO')
 
 # iterate tracks
-for track in playlist.tracks:
+async for track in playlist:
 	print(track)
 
 # get the user we're logged in as
