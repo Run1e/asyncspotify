@@ -26,7 +26,7 @@ author = 'RUNIE'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '0.11.6'
+release = '0.11.7'
 
 
 # -- General configuration ---------------------------------------------------
