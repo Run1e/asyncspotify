@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 
-from .album import SimpleAlbum
-from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
-from .object import SpotifyObject
 from .audioanalysis import AudioAnalysis
 from .audiofeatures import AudioFeatures
+from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin
+from .object import SpotifyObject
 
 
 class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
@@ -43,7 +42,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 		'''
 
 		return await self._client.get_audio_features(self.id)
-		
+
 	async def audio_analysis(self) -> AudioAnalysis:
 		'''
 		Get 'Audio Analysis' of the track.
@@ -52,6 +51,7 @@ class _BaseTrack(SpotifyObject, ExternalURLMixin, ArtistMixin):
 		:return: :class:`AudioAnalysis`
 		'''
 		return await self._client.get_audio_analysis(self.id)
+
 
 class SimpleTrack(_BaseTrack):
 	'''
@@ -116,6 +116,8 @@ class FullTrack(_BaseTrack, ExternalIDMixin):
 		ExternalIDMixin.__init__(self, data)
 
 		self.popularity = data.pop('popularity')
+
+		from .album import SimpleAlbum
 		self.album = SimpleAlbum(client, data.pop('album'))
 
 

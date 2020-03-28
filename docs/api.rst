@@ -75,6 +75,10 @@ Playlist
    :members:
    :inherited-members:
 
+   .. describe:: async for track in playlist
+
+      Create a pager and iterate all tracks in this object. Also updates the ``tracks`` cache (same as calling ``fill()``).
+
 .. autoclass:: FullPlaylist
    :members:
 
@@ -84,6 +88,10 @@ Album
 .. autoclass:: SimpleAlbum
    :members:
    :inherited-members:
+
+   .. describe:: async for track in album
+
+      Create a pager and iterate all tracks in this object. Also updates the ``tracks`` cache (same as calling ``fill()``).
 
 .. autoclass:: FullAlbum
    :members:

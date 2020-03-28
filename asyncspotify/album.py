@@ -2,18 +2,21 @@ from datetime import datetime
 
 from .mixins import ArtistMixin, ExternalIDMixin, ExternalURLMixin, ImageMixin, TrackMixin
 from .object import SpotifyObject
+from .track import SimpleTrack
 
 
 class _BaseAlbum(SpotifyObject, TrackMixin, ImageMixin, ExternalURLMixin, ArtistMixin):
 	_type = 'album'
+	_track_class = SimpleTrack
 	__date_fmt = dict(year='%Y', month='%Y-%m', day='%Y-%m-%d')
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
 
+		TrackMixin.__init__(self, data)
+		ImageMixin.__init__(self, data)
 		ExternalURLMixin.__init__(self, data)
 		ArtistMixin.__init__(self, data)
-		ImageMixin.__init__(self, data)
 
 		self.album_group = data.pop('album_group', None)  # can be None, though this is not specified in the API docs
 		self.album_type = data.pop('album_type')

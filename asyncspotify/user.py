@@ -72,7 +72,7 @@ class PrivateUser(_BaseUser):
 		self.email = data.pop('email', None)
 		self.product = data.pop('product', None)
 
-	async def top_tracks(self, limit=None, offset=None, time_range=None):
+	async def top_tracks(self, limit=20, offset=None, time_range=None):
 		'''
 		Gets the top tracks of the current user.
 
@@ -92,7 +92,7 @@ class PrivateUser(_BaseUser):
 
 		return await self._client.get_me_top_tracks(limit=limit, offset=offset, time_range=time_range)
 
-	async def top_artists(self, limit=None, offset=None, time_range=None):
+	async def top_artists(self, limit=20, offset=None, time_range=None):
 		'''
 		Get the top artists of the current user.
 

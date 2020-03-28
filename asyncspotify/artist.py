@@ -10,11 +10,11 @@ class _BaseArtist(SpotifyObject, ExternalURLMixin):
 
 		ExternalURLMixin.__init__(self, data)
 
-	async def top_tracks(self, market='from_token'):
+	async def top_tracks(self, market=None):
 		'''
 		Returns this artists top tracks.
 
-		:param market: Market to find tracks for.
+		:param market: Market to find tracks for. Auto-resolved by the library if left blank.
 		:return: List[:class:`FullTrack`]
 		'''
 
@@ -29,9 +29,9 @@ class _BaseArtist(SpotifyObject, ExternalURLMixin):
 
 		return await self._client.get_artist_related_artists(self.id)
 
-	async def albums(self, include_groups=None, country=None, limit=None, offset=None):
+	async def albums(self, limit=20, include_groups=None, country=None, offset=None):
 		'''
-		Get artist' albums
+		Get artists albums
 
 		:return: List[:class:`SimpleAlbum`]
 		'''

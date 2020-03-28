@@ -8,7 +8,7 @@ with open('requirements.txt', 'r') as f:
 
 setuptools.setup(
     name="asyncspotify",
-    version="0.11.6",
+    version="0.11.7",
     author="RUNIE",
     author_email="runar-borge@hotmail.com",
     description="Spotify Web API implementation that is fully asynchronous and object-oriented.",
@@ -26,5 +26,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.6"
+    python_requires=">=3.5.2"  # first version to support async class generator iterators
 )

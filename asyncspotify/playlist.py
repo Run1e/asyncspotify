@@ -1,14 +1,17 @@
 from .mixins import ExternalURLMixin, ImageMixin, TrackMixin
 from .object import SpotifyObject
 from .user import PublicUser
+from .track import PlaylistTrack
 
 
 class _BasePlaylist(SpotifyObject, TrackMixin, ExternalURLMixin, ImageMixin):
 	_type = 'playlist'
+	_track_class = PlaylistTrack
 
 	def __init__(self, client, data):
 		super().__init__(client, data)
-		
+
+		TrackMixin.__init__(self, data)
 		ExternalURLMixin.__init__(self, data)
 		ImageMixin.__init__(self, data)
 

@@ -1,7 +1,9 @@
 import logging
 
+from .http import Route
 from .image import Image
 from .object import SpotifyObject
+from .pager import Pager
 
 log = logging.getLogger(__name__)
 
@@ -46,20 +48,71 @@ class ExternalURLMixin:
 			self.external_urls[site] = url
 
 
+def valid_item(item):
+	if item is None:
+		return False
+	# maybe explicitly check for self._track_class?
+	if 'track' in item and item['track'] is None:
+		return False
+	return True
+
+
 class TrackMixin:
-	@property
+	def __init__(self, data):
+		tracks = data.pop('tracks', None)
+		if tracks is None:
+			return
+
+		items = tracks.pop('items', None)
+		if items is None:
+			return
+
+		self.tracks = []
+
+		for item in items:
+			if valid_item(item):
+				self._add_track(item)
+
+		self.__total = tracks.get('total')
+		self.__limit = tracks.get('limit')
+
+	async def __aiter__(self):
+		'''Create a pager and iterate all tracks in this object. Also updates the ``tracks`` cache.'''
+
+		self.tracks = []
+
+		# get new pager
+		r = Route('GET', '{0}s/{1}/tracks'.format(self._type, self.id), offset=0, limit=self.__limit)
+		pager_data = await self._client.http.request(r)
+
+		self.__total = pager_data.get('total')
+
+		async for item in Pager(self._client.http, pager_data):
+			if valid_item(item):
+				yield self._add_track(item)
+			else:
+				# if it's not a valid item it shouldn't count towards the total track count goal
+				self.__total -= 1
+
+	async def fill(self):
+		'''Update this objects ``tracks`` cache.'''
+
+		async for track in self:
+			pass
+
+	def is_filled(self):
+		'''Whether this object contains as many tracks as advertised by the previous pager.'''
+
+		return len(self.tracks) >= self.__total
+
 	def has_track(self, track):
+		'''Check if this object has a track.'''
+
 		if isinstance(track, SpotifyObject):
 			track = track.id
 		return any(track == t.id for t in self.tracks)
 
-	async def _fill_tracks(self, object_type, pager):
-		self.tracks = []
-
-		async for obj in pager:
-			# TODO: handle this case nicer?
-			if obj.get('track', True) is None:
-				log.warning('Object has no track associated with it: %s', obj)
-				continue
-
-			self.tracks.append(object_type(self._client, obj))
+	def _add_track(self, track_data):
+		track = self._track_class(self._client.http, track_data)
+		self.tracks.append(track)
+		return track

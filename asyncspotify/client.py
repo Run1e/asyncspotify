@@ -7,7 +7,6 @@ from .artist import FullArtist, SimpleArtist
 from .audioanalysis import AudioAnalysis
 from .audiofeatures import AudioFeatures
 from .device import Device
-from .exceptions import *
 from .http import HTTP
 from .oauth.flows import Authenticator, RefreshableFlowMixin
 from .object import SpotifyObject
@@ -26,6 +25,10 @@ def get_id(obj):
 		return obj.id
 	else:
 		return obj
+
+
+def clamp(limit, minimum):
+	return None if limit is None else min(max(limit, 1), minimum)
 
 
 class Client:
@@ -202,14 +205,14 @@ class Client:
 
 		await self.http.player_shuffle(state, get_id(device))
 
-	async def search(self, *types, q, market=None, limit=None, offset=None, include_external=None) -> dict:
+	async def search(self, *types, q, limit=20, market=None, offset=None, include_external=None) -> dict:
 		'''
 		Searches for tracks, artists, albums and/or playlists.
 
 		:param types: One or more of the strings ``track``, ``album``, ``artist``, ``playlist`` or the class equivalents.
 		:param str q: The search query. See Spotifys' query construction guide `here. <https://developer.spotify.com/documentation/web-api/reference/search/search/>`_
-		:param market: ISO-3166-1_ country code or the string ``from_token``.
 		:param int limit: How many results of each type to return.
+		:param market: ISO-3166-1_ country code or the string ``from_token``.
 		:param offset: Where to start the pagination.
 		:param include_external: If this is equal to ``audio``, the specified the response will include any relevant audio content that is hosted externally.
 
@@ -228,7 +231,7 @@ class Client:
 		data = await self.http.search(
 			q, ','.join(actual_types),
 			market=market,
-			limit=limit,
+			limit=clamp(limit, 50),
 			offset=offset,
 			include_external=include_external
 		)
@@ -257,7 +260,7 @@ class Client:
 
 		return results
 
-	async def search_tracks(self, q, market=None, limit=None, offset=None, include_external=None) -> List[SimpleTrack]:
+	async def search_tracks(self, q, limit=20, market=None, offset=None, include_external=None) -> List[SimpleTrack]:
 		'''
 		Alias for ``Client.search('track', ...)``
 
@@ -269,7 +272,7 @@ class Client:
 		)
 		return results['tracks']
 
-	async def search_artists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[FullArtist]:
+	async def search_artists(self, q, limit=20, market=None, offset=None, include_external=None) -> List[FullArtist]:
 		'''
 		Alias for ``Client.search('artist, ...)``
 
@@ -281,7 +284,7 @@ class Client:
 		)
 		return results['artists']
 
-	async def search_albums(self, q, market=None, limit=None, offset=None, include_external=None) -> List[SimpleAlbum]:
+	async def search_albums(self, q, limit=20, market=None, offset=None, include_external=None) -> List[SimpleAlbum]:
 		'''
 		Alias for ``Client.search('album', ...)``
 
@@ -293,8 +296,7 @@ class Client:
 		)
 		return results['albums']
 
-	async def search_playlists(self, q, market=None, limit=None, offset=None, include_external=None) -> List[
-		SimplePlaylist]:
+	async def search_playlists(self, q, limit=20, market=None, offset=None, include_external=None) -> List[SimplePlaylist]:
 		'''
 		Alias for ``Client.search('playlist', ...)``
 
@@ -356,7 +358,7 @@ class Client:
 		data = await self.http.get_me()
 		return PrivateUser(self, data)
 
-	async def get_me_top_tracks(self, limit=None, offset=None, time_range=None) -> List[SimpleTrack]:
+	async def get_me_top_tracks(self, limit=20, offset=None, time_range=None) -> List[SimpleTrack]:
 		'''
 		Gets the top tracks of the current user.
 
@@ -374,10 +376,7 @@ class Client:
 		:return: List[:class:`SimpleTrack`]
 		'''
 
-		if limit > 50:
-			raise SpotifyException('Limit must be less or equal to 50.')
-
-		data = await self.http.get_me_top_tracks(limit=limit, offset=offset, time_range=time_range)
+		data = await self.http.get_me_top_tracks(limit=clamp(limit, 50), offset=offset, time_range=time_range)
 
 		tracks = []
 		for track_obj in data['items']:
@@ -401,10 +400,7 @@ class Client:
 		:return: List[:class:`SimpleArtist`]
 		'''
 
-		if limit > 50:
-			raise SpotifyException('Limit must be less or equal to 50.')
-
-		data = await self.http.get_me_top_artists(limit=limit, offset=offset, time_range=time_range)
+		data = await self.http.get_me_top_artists(limit=clamp(limit, 50), offset=offset, time_range=time_range)
 
 		artists = []
 		for artist_obj in data['items']:
@@ -502,7 +498,6 @@ class Client:
 		data = await self.http.get_playlist(playlist_id)
 
 		playlist = FullPlaylist(self, data)
-		await playlist._fill_tracks(PlaylistTrack, Pager(self.http, data.pop('tracks')))
 
 		return playlist
 
@@ -543,10 +538,7 @@ class Client:
 			if playlist_obj is None:
 				playlists.append(None)
 			else:
-				playlist = SimplePlaylist(self, playlist_obj)
-				pager = Pager(self.http, await self.http.get_playlist_tracks(playlist.id))
-				await playlist._fill_tracks(PlaylistTrack, pager)
-				playlists.append(playlist)
+				playlists.append(SimplePlaylist(self, playlist_obj))
 
 		return playlists
 
@@ -622,7 +614,7 @@ class Client:
 
 		return FullArtist(self, data)
 
-	async def get_artist_albums(self, artist_id, include_groups=None, country=None, limit=None, offset=None) -> List[SimpleAlbum]:
+	async def get_artist_albums(self, artist_id, limit=20, include_groups=None, country=None, offset=None) -> List[SimpleAlbum]:
 		'''
 		Get an artist's albums.
 
@@ -639,10 +631,10 @@ class Client:
 		albums = []
 
 		data = await self.http.get_artist_albums(
-			artist_id, include_groups=include_groups, country=country, limit=limit, offset=offset
+			artist_id, include_groups=include_groups, country=country, limit=clamp(limit, 50), offset=offset
 		)
 
-		async for album_obj in Pager(self.http, data):
+		async for album_obj in Pager(self.http, data, limit):
 			albums.append(SimpleAlbum(self, album_obj))
 
 		return albums
@@ -720,7 +712,6 @@ class Client:
 		data = await self.http.get_album(album_id, market=market)
 
 		album = FullAlbum(self, data)
-		await album._fill_tracks(SimpleTrack, Pager(self.http, data['tracks']))
 
 		return album
 
@@ -742,13 +733,11 @@ class Client:
 				if album_obj is None:
 					albums.append(None)
 				else:
-					album = FullAlbum(self, album_obj)
-					await album._fill_tracks(SimpleTrack, Pager(self.http, album_obj['tracks']))
-					albums.append(album)
+					albums.append(FullAlbum(self, album_obj))
 
 		return albums
 
-	async def get_album_tracks(self, album, limit=None, offset=None, market=None) -> List[SimpleTrack]:
+	async def get_album_tracks(self, album, limit=20, offset=None, market=None) -> List[SimpleTrack]:
 		'''
 		Get tracks from an album.
 
@@ -761,29 +750,27 @@ class Client:
 
 		album = get_id(album)
 
-		data = await self.http.get_album_tracks(album, limit=limit, offset=offset, market=market)
+		# assuming the limit is 50 for now
+		data = await self.http.get_album_tracks(album, limit=clamp(limit, 50), offset=offset, market=market)
 
 		tracks = []
 
-		async for track_obj in Pager(self.http, data):
+		async for track_obj in Pager(self.http, data, limit):
 			tracks.append(SimpleTrack(self, track_obj))
 
 		return tracks
 
-	async def get_followed_artists(self, type='artist', limit=None, after=None) -> List[SimpleArtist]:
+	async def get_followed_artists(self, limit=20, after=None) -> List[SimpleArtist]:
 		'''
 		Get user's followed artists
 
-		:param str type: The ID type: currently only artist is supported.
 		:param int limit: The maximum number of items to return. Default - infinity
 		:param after: What artist ID to start the fetching from.
 		:return: List[:class:`SimpleArtist`]
 		'''
 
-		if type != 'artist':
-			raise SpotifyException('Currently only artist is supported.')
-
-		data = await self.http.get_followed_artists(type=type, limit=limit, after=after)
+		# assuming the limit is 50 for now
+		data = await self.http.get_followed_artists(type='artist', limit=clamp(limit, 50), after=after)
 
 		artists = []
 
@@ -802,5 +789,8 @@ class Client:
 		:param after: The last artist ID retrieved from the previous request.
 		'''
 
+		# not sure what this endpoint is doing, it doesn't take a limit at least. will look at it some other time
+		raise NotImplementedError
+
 		for chunk in subslice(ids, 50):
-			await self.http.following(type=type, ids=','.join(get_id(obj) for obj in chunk), limit=limit, after=after)
+			await self.http.following(type=type, ids=','.join(get_id(obj) for obj in chunk), limit=clamp(limit, 50), after=after)
