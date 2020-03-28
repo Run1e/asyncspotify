@@ -64,6 +64,9 @@ class SimplePlaylist(_BasePlaylist):
 	'''
 	Represents a playlist object.
 
+	.. note::
+	   To iterate all tracks, you have to use the ``async for`` construct or fill the object with ``.fill()`` before iterating ``.tracks``.
+
 	id: str
 		Spotify ID of the playlist.
 	name: str

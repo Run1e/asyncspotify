@@ -40,6 +40,9 @@ class SimpleAlbum(_BaseAlbum):
 	'''
 	Represents an Album object.
 
+	.. note::
+	   To iterate all tracks, you have to use the ``async for`` construct or fill the object with ``.fill()`` before iterating ``.tracks``.
+
 	id: str
 		Spotify ID of the album.
 	name: str
