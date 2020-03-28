@@ -53,6 +53,8 @@ class SimpleAlbum(_BaseAlbum):
 		List of artists that appear on the album.
 	images: List[:class:`Image`]
 		List of associated images, such as album cover in different sizes.
+	track_count: int
+		The expected track count as advertised by the last paging object. ``is_filled()`` can return True even if fewer tracks than this exists in ``tracks``, since some fetched tracks from the API can be None for various reasons.
 	uri: str
 		Spotify URI of the album.
 	link: str

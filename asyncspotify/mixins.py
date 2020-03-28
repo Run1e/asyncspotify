@@ -76,6 +76,8 @@ class TrackMixin:
 		self.__total = tracks.get('total')
 		self.__limit = tracks.get('limit')
 
+		self.track_count = self.__total
+
 	async def __aiter__(self):
 		'''Create a pager and iterate all tracks in this object. Also updates the ``tracks`` cache.'''
 
@@ -86,6 +88,7 @@ class TrackMixin:
 		pager_data = await self._client.http.request(r)
 
 		self.__total = pager_data.get('total')
+		self.track_count = self.__total
 
 		async for item in Pager(self._client.http, pager_data):
 			if valid_item(item):

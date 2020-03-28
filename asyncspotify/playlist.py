@@ -73,6 +73,8 @@ class SimplePlaylist(_BasePlaylist):
 		Name of the playlist.
 	tracks: List[:class:`SimpleTrack`]
 		All tracks in the playlist.
+	track_count: int
+		The expected track count as advertised by the last paging object. ``is_filled()`` can return True even if fewer tracks than this exists in ``tracks``, since some fetched tracks from the API can be None for various reasons.
 	uri: str
 		Spotify URI of the playlist.
 	link: str
