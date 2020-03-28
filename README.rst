@@ -46,7 +46,7 @@ Authenticating using the Client Credentials flow, and getting a playlist:
 
    async with Client(auth) as sp:
       playlist = await sp.get_playlist('1MG01HhbCvVhH9NmXhd9GC')
-      for track in playlist.tracks:
+      async for track in playlist:
          print(track.name)
 
 Searching for and getting tracks:
