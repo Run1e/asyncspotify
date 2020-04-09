@@ -588,6 +588,18 @@ class Client:
 
 		return AudioFeatures(self, data)
 
+	async def get_audio_features_multiple_tracks(self, *tracks) -> List[AudioFeatures]:
+		'''
+		Get Audio Features for multiple tracks.
+
+		:param str tracks: :class:`Track` or a comma seperated list of Spotify IDs
+		:return: list[:class:`AudioFeatures`]
+		'''
+
+		data = await self.http.get_audio_features_multiple_tracks(','.join(get_id(track) for track in tracks))
+		return [AudioFeatures(self, item) for item in data['audio_features']]
+
+
 	async def get_audio_analysis(self, track) -> AudioAnalysis:
 		'''
 		Get Audio Analysis of a track.
