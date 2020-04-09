@@ -227,6 +227,16 @@ class TestClient:
 		with raises(BadRequest):
 			await sp.get_audio_features(bad_id)
 
+	async def test_get_audio_features_multiple_tracks(self, sp: Client, good_track_id, bad_id, good_playlist):
+		tracks = await sp.get_playlist_tracks(good_playlist.id)
+		assert isinstance(tracks, list)
+		audio_features_list = await sp.get_audio_features_multiple_tracks(','.join(track.id for track in tracks[0:20]))
+		for audio_features in audio_features_list:
+			assert isinstance(audio_features.acousticness, float)
+			assert isinstance(audio_features.track_href, str)
+			assert isinstance(audio_features.duration, timedelta)
+
+
 	async def test_get_artist_top_tracks(self, sp: Client, good_artist_id):
 		tracks = await sp.get_artist_top_tracks(good_artist_id)
 

@@ -238,6 +238,10 @@ class HTTP:
 		r = Route('GET', 'tracks', ids=track_ids)
 		return await self.request(r)
 
+	async def get_audio_features_multiple_tracks(self, track_ids):
+		r = Route('GET', 'audio-features', ids=track_ids)
+		return await self.request(r)
+
 	async def get_audio_features(self, track_id):
 		r = Route('GET', 'audio-features/{0}'.format(track_id))
 		return await self.request(r)
