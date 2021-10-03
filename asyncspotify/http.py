@@ -279,7 +279,7 @@ class HTTP:
 		return await self.request(r)
 
 	async def get_album_tracks(self, album_id, **kwargs):
-		r = Route('GET', 'albums/{0}/tracks'.format(album_id), limit=50, **kwargs)
+		r = Route('GET', 'albums/{0}/tracks'.format(album_id), **kwargs)
 		return await self.request(r)
 
 	async def get_followed_artists(self, type, **kwargs):
